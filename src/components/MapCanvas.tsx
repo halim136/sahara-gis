@@ -65,6 +65,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 }) => {
   const [liveZoom, setLiveZoom] = useState(4);
   const [swipeRatio, setSwipeRatio] = useState(0.5);
+  const swipeRatioRef = useRef(swipeRatio);
+  swipeRatioRef.current = swipeRatio;
   const terrainRasterRef = useRef<L.ImageOverlay | null>(null);
   const compareLayerRef = useRef<L.TileLayer | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -334,13 +336,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     baseTileLayerRef.current = newLayer;
   }, [currentSource, isOfflineMode]);
 
-  // Swipe comparison: a second source clipped to the right of a draggable divider.
+  // Clip the compare pane to the right of the divider. Leaflet panes are 0×0,
+  // so a percentage clip-path collapses to nothing; use pixel `clip` in the
+  // pane's own (layer-point) coordinate space, which accounts for the map pan.
+  const applyCompareClip = (map: L.Map, ratio: number) => {
+    const pane = map.getPane('sas-compare');
+    if (!pane) return;
+    const size = map.getSize();
+    const tl = map.containerPointToLayerPoint(L.point(0, 0));
+    const br = map.containerPointToLayerPoint(L.point(size.x, size.y));
+    const divX = map.containerPointToLayerPoint(L.point(ratio * size.x, 0)).x;
+    pane.style.clipPath = 'none';
+    pane.style.clip = `rect(${tl.y}px, ${br.x}px, ${br.y}px, ${divX}px)`;
+  };
+
+  // Swipe comparison: a second source shown over the right of a draggable divider.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
+    const pane = map.getPane('sas-compare');
     if (compareLayerRef.current) { map.removeLayer(compareLayerRef.current); compareLayerRef.current = null; }
+    if (pane) { pane.style.clip = ''; pane.style.clipPath = 'none'; }
     if (!compareSource) return;
-    if (!map.getPane('sas-compare')) { map.createPane('sas-compare').style.zIndex = '210'; }
     const sub = compareSource.subdomains && compareSource.subdomains.length > 0 ? compareSource.subdomains : ['a', 'b', 'c'];
     const common: any = { pane: 'sas-compare', maxZoom: compareSource.max_zoom || 21, attribution: '' };
     let layer: L.TileLayer;
@@ -352,12 +369,20 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     }
     layer.addTo(map);
     compareLayerRef.current = layer;
-    return () => { if (compareLayerRef.current) { map.removeLayer(compareLayerRef.current); compareLayerRef.current = null; } };
+    const reclip = () => applyCompareClip(map, swipeRatioRef.current);
+    reclip();
+    map.on('move zoom moveend zoomend viewreset resize', reclip);
+    return () => {
+      map.off('move zoom moveend zoomend viewreset resize', reclip);
+      if (compareLayerRef.current) { map.removeLayer(compareLayerRef.current); compareLayerRef.current = null; }
+      if (pane) { pane.style.clip = ''; pane.style.clipPath = 'none'; }
+    };
   }, [compareSource, isOfflineMode]);
 
+  // Re-clip live while the divider handle is dragged.
   useEffect(() => {
-    const pane = mapInstanceRef.current?.getPane('sas-compare');
-    if (pane) pane.style.clipPath = compareSource ? `inset(0 0 0 ${swipeRatio * 100}%)` : 'none';
+    const map = mapInstanceRef.current;
+    if (map && compareSource) applyCompareClip(map, swipeRatio);
   }, [swipeRatio, compareSource]);
 
   // 3. Overlays Updating
