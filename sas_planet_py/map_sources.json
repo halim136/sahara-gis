@@ -80,6 +80,99 @@
       "attribution": "© Esri, DigitalGlobe, GeoEye, Earthstar",
       "cache_name": "ArcGIS.Imagery"
     },
+    "esri_street": {
+      "id": "esri_street",
+      "name": "ESRI World Street Map",
+      "category": "Map",
+      "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      "subdomains": [],
+      "max_zoom": 19,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Esri, HERE, Garmin, USGS",
+      "cache_name": "ArcGIS.Streets"
+    },
+    "esri_topo": {
+      "id": "esri_topo",
+      "name": "ESRI World Topo Map",
+      "category": "Terrain",
+      "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+      "subdomains": [],
+      "max_zoom": 19,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Esri, HERE, Garmin, USGS, NGA",
+      "cache_name": "ArcGIS.Topo"
+    },
+    "esri_terrain": {
+      "id": "esri_terrain",
+      "name": "ESRI World Terrain",
+      "category": "Terrain",
+      "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}",
+      "subdomains": [],
+      "max_zoom": 13,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Esri, USGS, NOAA",
+      "cache_name": "ArcGIS.Terrain"
+    },
+    "esri_natgeo": {
+      "id": "esri_natgeo",
+      "name": "ESRI National Geographic",
+      "category": "Map",
+      "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
+      "subdomains": [],
+      "max_zoom": 16,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© National Geographic, Esri",
+      "cache_name": "ArcGIS.NatGeo"
+    },
+    "esri_gray": {
+      "id": "esri_gray",
+      "name": "ESRI Light Gray Canvas",
+      "category": "Map",
+      "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      "subdomains": [],
+      "max_zoom": 16,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Esri, HERE, Garmin",
+      "cache_name": "ArcGIS.LightGray"
+    },
+    "bing_sat": {
+      "id": "bing_sat",
+      "name": "Bing Satellite",
+      "category": "Satellite",
+      "url_template": "https://ecn.t{s}.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1",
+      "subdomains": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "max_zoom": 19,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Microsoft, Earthstar Geographics",
+      "cache_name": "Bing.Imagery"
+    },
+    "cyclosm": {
+      "id": "cyclosm",
+      "name": "CyclOSM",
+      "category": "Map",
+      "url_template": "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+      "subdomains": [
+        "a",
+        "b",
+        "c"
+      ],
+      "max_zoom": 20,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© CyclOSM, OpenStreetMap contributors",
+      "cache_name": "CyclOSM"
+    },
     "osm": {
       "id": "osm",
       "name": "OpenStreetMap Standard",
