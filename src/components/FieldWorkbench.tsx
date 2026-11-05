@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import L from 'leaflet';
+import {DraggableWindow} from './DraggableWindow';
 import {X,Download,RefreshCw,ArrowUp,ArrowDown,Eye,EyeOff,Trash2} from 'lucide-react';
 import {studioRequest,studioUpload,CRS_OPTIONS} from './AdvancedGisWorkbench';
 import {parseNmea,type NmeaFix} from '../utils/nmea';
@@ -47,7 +48,7 @@ export function FieldWorkbench(p:Props){
  useEffect(()=>{const m=(window as any).__SAS_MAP,v=analysis?.profile?.[hover];if(!m||!v||!p.open||tab!=='tracks')return;const marker=L.circleMarker([v.lat,v.lon],{pane:'markerPane',radius:7,color:'#d3265a',fillOpacity:1,fillColor:'#fff',weight:3}).addTo(m);return()=>{marker.remove();};},[analysis,hover,p.open,tab]);
  if(!p.open)return null;
  const options=CRS_OPTIONS.filter(([v])=>v.startsWith('EPSG:'));
- return <aside className="sheet-grid-panel professional-workbench field-workbench desktop-dialog" dir={p.ar?'rtl':'ltr'} role="dialog" aria-label={t('الخرائط والعمل الميداني','Maps and field work')}><header className="desktop-dialog-title"><h2>{t('الخرائط والعمل الميداني','Maps and field work')}</h2><button aria-label={t('إغلاق أدوات الميدان','Close field tools')} onClick={p.onClose}><X size={16}/></button></header><div className="p-3 space-y-3 overflow-auto text-xs">
+ return <DraggableWindow lang={p.ar?'ar':'en'}><aside className="sheet-grid-panel professional-workbench field-workbench desktop-dialog" dir={p.ar?'rtl':'ltr'} role="dialog" aria-label={t('الخرائط والعمل الميداني','Maps and field work')}><header className="desktop-dialog-title"><h2>{t('الخرائط والعمل الميداني','Maps and field work')}</h2><button aria-label={t('إغلاق أدوات الميدان','Close field tools')} onClick={p.onClose}><X size={16}/></button></header><div className="p-3 space-y-3 overflow-auto text-xs">
  <nav className="flex flex-wrap gap-1">{[['layers','الطبقات','Layers'],['tracks','المسارات GPX','GPX tracks'],['gps','GPS حقيقي','Real GPS'],['web','WMS / WMTS','WMS / WMTS'],['photos','صور الميدان','Photos'],['planning','التخطيط','Planning'],['coordinates','إحداثيات وشبكة','Coordinates & grid'],['export','تصدير للميدان','Field export']].map(([key,a,e])=><button key={key} className={'desktop-button '+(tab===key?'primary':'')} onClick={()=>{setTab(key);setError('');setResult(null);}}>{t(a,e)}</button>)}</nav>
  {tab==='layers'&&<>
  <p>{t('الطبقة الأولى أسفل القائمة تُرسم أولاً. حرّك الطبقات وحدد الشفافية؛ تُحفظ مع المشروع.','Bottom layer is drawn first. Reorder and adjust opacity; layers are saved with projects.')}</p>
@@ -120,7 +121,7 @@ export function FieldWorkbench(p:Props){
  {busy&&<p role="status"><RefreshCw className="inline animate-spin" size={14}/> {t('جارٍ المعالجة…','Processing…')}</p>}{error&&<p role="alert" className="text-red-700">{error}</p>}
  {result?.files?.map((f:any)=><a key={f.url} href={f.url} download className="desktop-button"><Download size={14}/>{f.name}</a>)}
  {result?.statistics&&tab!=='tracks'&&<dl className="field-stats">{[['distance_m','المسافة م','Distance m'],['start_snap_m','جذب البداية م','Start snap m'],['end_snap_m','جذب النهاية م','End snap m'],['converted','نقاط محولة','Converted'],['failed','نقاط بها خطأ','Failed'],['tiles','بلاطات','Tiles'],['segments','مقاطع','Segments']].filter(([k])=>result.statistics[k]!==undefined).map(([k,a,e])=><div key={k}><dt>{t(a,e)}</dt><dd>{Number(result.statistics[k]).toLocaleString(undefined,{maximumFractionDigits:2})}</dd></div>)}</dl>}
- </div></aside>;
+ </div></aside></DraggableWindow>;
 }
 function TrackProfile({analysis,hover,setHover,ar}:{analysis:any;hover:number;setHover:(n:number)=>void;ar:boolean}){
  const points=analysis.profile,valid=points.filter((p:any)=>Number.isFinite(p.ele)),zmin=valid.length?valid.reduce((n:number,p:any)=>Math.min(n,p.ele),Infinity):0,zmax=valid.length?valid.reduce((n:number,p:any)=>Math.max(n,p.ele),-Infinity):1,total=points.at(-1)?.distance_m||1,groups=new Map<string,any[]>();let run=0;for(const p of points){if(!Number.isFinite(p.ele)){run++;continue;}const key=p.segment+'_'+run;if(!groups.has(key))groups.set(key,[]);groups.get(key)!.push(p);}

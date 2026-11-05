@@ -6,6 +6,7 @@ import {useHistoryState} from './utils/history';
 import {AlgeriaSheetGrid} from './components/AlgeriaSheetGrid';
 import {storeAppValue} from './utils/portableState';
 import {AdvancedGisWorkbench} from './components/AdvancedGisWorkbench';
+import {WindowTaskbar} from './components/WindowTaskbar';
 import {GisPreview} from './components/GisPreview';
 import {pathMeasurement,distanceText} from './utils/measurement';
 import sourceDefinitions from '../sas_planet_py/map_sources.json';
@@ -436,6 +437,7 @@ export default function App() {
       {studioOpen&&<AdvancedGisWorkbench lang={lang} bbox={hasSelection?activeBbox:currentMapBounds()||activeBbox} source={currentSource} offline={isOfflineMode} polygon={selectedPolygon} marks={marks} preview={studioPreview} onPreview={setStudioPreview} onOverlay={setTerrainOverlay} onClose={()=>setStudioOpen(false)} onDraw={mode=>{setStudioDrawing(true);setStudioOpen(false);setSelectedBbox(null);setSelectedPolygon(null);setSelectionMode(mode);}} onImport={collection=>{const incoming:MarkItem[]=[];for(const f of collection.features||[]){const type=f.geometry?.type;if(['Point','LineString','Polygon'].includes(type))incoming.push({id:crypto.randomUUID(),type:type==='Point'?'point':type==='LineString'?'linestring':'polygon',coords:f.geometry.coordinates,name:f.properties?.name||'GIS feature',description:JSON.stringify(f.properties||{}),category:type==='Polygon'?'Buildings / GIS':'GIS',color:'#00a6b6'});}setMarks(m=>[...m,...incoming]);}}/>}
       {terrain3dOpen&&terrain3dRegion&&<Suspense fallback={<div className="fixed inset-0 z-[1000] bg-black/60 flex items-center justify-center text-white">{isAr?'تحميل عارض 3D…':'Loading 3D viewer…'}</div>}><Terrain3DViewer region={terrain3dRegion} source={currentSource} marks={marks} offline={isOfflineMode} lang={lang} defaultTerrainSource={settings.terrainSource} initialSession={camera3D} onClose={()=>setTerrain3dOpen(false)}/></Suspense>}
       {sheetGridOpen&&<AlgeriaSheetGrid catalogId={catalogId} ar={isAr} offline={isOfflineMode} terrainSource={settings.terrainSource} onClose={()=>setSheetGridOpen(false)} onSelect={bbox=>{setSelectedBbox(bbox);setSelectedPolygon(null);setSelectionMode('none');}} onAnalyze={bbox=>{setSheetGridOpen(false);setTopoRegion(bbox);setTerrainAnalysisOpen(true);}}/>}
+      <WindowTaskbar lang={lang} />
       {/* Modals */}
       {settingsOpen && <SettingsModal settings={settings} sources={allSources} customSources={customSources} onCustomSourcesChange={list=>{updateCustomSources(list);if(currentSource.custom&&!list.some(s=>s.id===currentSource.id))setCurrentSource(DEFAULT_SOURCES[0]);}} onSave={applySettings} onClose={()=>setSettingsOpen(false)} />}
       {terrainAnalysisOpen && <TerrainWorkbench bbox={topoRegion || activeBbox} settings={settings} isOfflineMode={isOfflineMode} onClose={()=>setTerrainAnalysisOpen(false)} onApply={setTerrainOverlay} />}

@@ -1,5 +1,6 @@
 import React,{useState,useEffect} from 'react';
 import {X,Play,Upload,Download,Building2,Mountain,Map,HardDrive,Layers,Eye,Waves,Undo2,Box,Leaf} from 'lucide-react';
+import {DraggableWindow} from './DraggableWindow';
 import {BoundingBox,MapSource,MarkItem} from '../types';
 import {TerrainOverlay} from './TerrainWorkbench';
 export async function studioRequest(operation:string,body:any){const response=await fetch('/api/studio/'+operation,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw Error(data.error||'GIS operation failed');if(data.result?.files?.length)window.dispatchEvent(new CustomEvent('sas:analysis-result',{detail:{operation,result:{files:data.result.files,statistics:data.result.statistics}}}));return data.result;}
@@ -27,7 +28,7 @@ export function AdvancedGisWorkbench(p:Props){
  const zoomValues=()=>zooms.split(',').map(z=>Number(z.trim()));
  const queue=async(repair=false)=>{setBusy(true);setError('');try{const response=await fetch('/api/cache/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:p.source.id,bbox,zooms:zoomValues(),repair,damaged})});const data=await response.json();if(!response.ok)throw Error(data.error);setJobs(j=>[...j,data.job]);}catch(e:any){setError(e.message);}finally{setBusy(false);}};
  const features={type:'FeatureCollection',features:p.marks.map(m=>({type:'Feature',properties:{name:m.name,description:m.description,category:m.category},geometry:{type:m.type==='point'?'Point':m.type==='linestring'?'LineString':'Polygon',coordinates:m.coords}}))};
- return <aside className="advanced-gis desktop-dialog" dir={ar?'rtl':'ltr'} role="dialog" aria-labelledby="advanced-title">
+ return <DraggableWindow lang={ar?'ar':'en'}><aside className="advanced-gis desktop-dialog" dir={ar?'rtl':'ltr'} role="dialog" aria-labelledby="advanced-title">
   <header className="desktop-dialog-title"><h2 id="advanced-title"><Layers size={18}/>{t('أدوات GIS المتقدمة','Advanced GIS tools')}</h2><button aria-label={t('إغلاق','Close')} onClick={p.onClose}><X size={18}/></button></header>
   <nav className="desktop-tabs flex-wrap">{[['buildings','المباني','Buildings',Building2],['dem','DEM محلي','Local DEM',Mountain],['watershed','الأحواض','Watersheds',Waves],['viewshed','الرؤية','Viewshed',Eye],['volume','الحجوم','Cut / Fill',Box],['veg','الغطاء النباتي','Vegetation',Leaf],['georeference','إسناد الصور','Georeferencing',Map],['layout','طباعة PDF','PDF layout',Download],['gpkg','GeoPackage','GeoPackage',Layers],['cache','الكاش والتنزيل','Cache & jobs',HardDrive]].map(([id,a,e,Icon]:any)=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setResult(null);setError('');}}><Icon size={13}/>{t(a,e)}</button>)}</nav>
   <div className="advanced-content space-y-3">
@@ -68,5 +69,5 @@ export function AdvancedGisWorkbench(p:Props){
    {result&&<div className="border rounded p-3 space-y-3">{result.preview&&<><img className="w-full max-h-52 object-contain" src={result.preview} alt={t('معاينة الناتج','Result preview')}/>{result.bbox&&<button className="desktop-button" onClick={()=>p.onOverlay({url:result.preview,bbox:result.bbox,name:t('نتيجة التحليل','Analysis result')})}>{t('عرض الراستر على الخريطة','Show raster on map')}</button>}</>}{result.files?.map((f:any)=><a key={f.url} className="desktop-button inline-flex" href={f.url} download><Download size={14}/>{f.name}</a>)}{result.statistics&&<pre className="text-[11px] bg-black/5 p-2 overflow-auto max-h-64" dir="ltr">{JSON.stringify(result.statistics,null,2)}</pre>}{result.note&&<p className="text-xs">{result.note}</p>}</div>}
    {p.preview&&<button className="desktop-button" onClick={()=>p.onPreview(null)}>{t('مسح المعاينة','Clear preview')}</button>}
   </div>
- </aside>;
+ </aside></DraggableWindow>;
 }

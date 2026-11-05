@@ -1,5 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {X,Download,RefreshCw} from 'lucide-react';
+import {DraggableWindow} from './DraggableWindow';
 import {studioRequest,studioUpload,CRS_OPTIONS} from './AdvancedGisWorkbench';
 import {VectorEditor} from './VectorEditor';
 import type {MarkItem} from '../types';
@@ -14,7 +15,7 @@ export function ProfessionalWorkbench(p:Props){
  const load=async(backup?:string)=>{if(!id)return;const d=await run('project_load',{id,backup});if(d){p.restore(d.project.state);setName(d.project.name);}};
  const fetchSheets=async()=>{const d=await run(catalogId?'catalog_query':'sheets25k',{id:catalogId,bbox:p.bbox,datum:'nord_sahara'});if(d){setSheets(d.geojson.features.filter((f:any)=>f.properties.sheet_id));setChosen([]);}};
  const selected=sheets.filter(f=>chosen.includes(f.properties.sheet_id));
- return <aside className="sheet-grid-panel professional-workbench desktop-dialog" style={{width:'min(480px,calc(100vw - 24px))',maxHeight:'calc(100vh - 180px)'}} dir={p.ar?'rtl':'ltr'} role="dialog" aria-label={t('الأدوات الاحترافية','Professional tools')}><header className="desktop-dialog-title"><h2>{t('الأدوات الاحترافية','Professional tools')}</h2><button onClick={p.onClose} aria-label={t('إغلاق الأدوات الاحترافية','Close professional tools')}><X size={16}/></button></header><div className="overflow-auto p-3 space-y-3 text-xs">
+ return <DraggableWindow lang={p.ar?'ar':'en'}><aside className="sheet-grid-panel professional-workbench desktop-dialog" style={{width:'min(480px,calc(100vw - 24px))',maxHeight:'calc(100vh - 180px)'}} dir={p.ar?'rtl':'ltr'} role="dialog" aria-label={t('الأدوات الاحترافية','Professional tools')}><header className="desktop-dialog-title"><h2>{t('الأدوات الاحترافية','Professional tools')}</h2><button onClick={p.onClose} aria-label={t('إغلاق الأدوات الاحترافية','Close professional tools')}><X size={16}/></button></header><div className="overflow-auto p-3 space-y-3 text-xs">
  <button className="desktop-button primary w-full" onClick={()=>window.dispatchEvent(new CustomEvent('sas:field-tools',{detail:'layers'}))}>{t('الخرائط والعمل الميداني · GPS / GPX','Maps & field work · GPS / GPX')}</button>
  <nav className="flex flex-wrap gap-1">{[['projects','المشاريع','Projects'],['edit','تحرير وفحص','Edit & topology'],['quality','جودة البيانات','Quality'],['catalog','فهرس الأوراق','Sheet catalog'],['atlas','أطلس طبوغرافي','Atlas']].map(([key,a,e])=><button key={key} className={'desktop-button '+(tab===key?'primary':'')} onClick={()=>{setTab(key);setResult(null);setError('');}}>{t(a,e)}</button>)}</nav>
  {tab==='projects'&&<>
@@ -61,7 +62,7 @@ export function ProfessionalWorkbench(p:Props){
  {busy&&<p role="status"><RefreshCw size={14} className="inline animate-spin"/> {t('جارٍ المعالجة…','Processing…')}</p>}{error&&<p role="alert" className="text-red-700">{error}</p>}
  {result?.files?.map((f:any)=><a className="desktop-button" key={f.url} href={f.url} download><Download size={14}/>{f.name}</a>)}
  {result?.statistics&&<details open><summary>{t('نتائج الفحص / التصدير','Report / export results')}</summary><ReportSummary value={result.statistics} ar={p.ar}/></details>}
- </div></aside>;
+ </div></aside></DraggableWindow>;
 }
 
 function ReportSummary({value,ar}:{value:any;ar:boolean}){
