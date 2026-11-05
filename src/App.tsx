@@ -345,10 +345,10 @@ export default function App() {
         onToggleMapTools={() => applySettings({...settings,showMapTools:!settings.showMapTools})}
       />
 
-      <div hidden={!settings.showMapTools}><MapTools lang={lang} currentSource={currentSource} sources={allSources} onSelectSource={setCurrentSource}
+      <MapTools lang={lang} currentSource={currentSource} sources={allSources} onSelectSource={setCurrentSource}
         onSelectView={() => { const b = currentMapBounds(); if (b) { setSelectedBbox(b); setSelectedPolygon(null); setSelectionMode('none'); } }}
         onOpenTopography={openTopography} contours={activeContourGeoJson} display={contourDisplay}
-        onDisplayChange={setContourDisplay} onClearContours={() => setActiveContourGeoJson(null)} /></div>
+        onDisplayChange={setContourDisplay} onClearContours={() => setActiveContourGeoJson(null)} />
 
       {/* Main Interactive Map Canvas */}
       <main className="flex-1 min-h-0 min-w-0 relative overflow-hidden">

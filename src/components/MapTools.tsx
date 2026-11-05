@@ -1,7 +1,7 @@
 import { storeAppValue } from '../utils/portableState';
 import React, { useEffect, useRef, useState } from 'react';
 import type L from 'leaflet';
-import { ArrowLeft, ArrowRight, Scan, Star, Trash2, Eye, EyeOff, Mountain } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Scan, Star, Trash2, Eye, EyeOff, Mountain, X } from 'lucide-react';
 import { MapSource } from '../types';
 
 export interface ContourDisplay { visible: boolean; majorOnly: boolean; opacity: number; }
@@ -69,20 +69,10 @@ export function MapTools({ lang, currentSource, sources, onSelectSource, onSelec
   };
   const button = 'p-1.5 rounded border border-slate-700 bg-slate-950 hover:bg-slate-800 disabled:opacity-30 flex items-center gap-1.5';
   const icon = (file: string) => <img src={'/assets/sasplanet/' + file} alt="" className="w-4 h-4 object-contain" />;
-  return <div className="relative z-30 flex flex-wrap items-center gap-2 px-3 py-1.5 bg-slate-900 border-b border-slate-800 text-slate-300 text-[11px]">
-    <button className={button} disabled={!nav.back} onClick={() => navigate(-1)} title={ar ? 'المشهد السابق' : 'Previous view'} aria-label={ar ? 'المشهد السابق' : 'Previous view'}><ArrowLeft className="w-4 h-4" /></button>
-    <button className={button} disabled={!nav.forward} onClick={() => navigate(1)} title={ar ? 'المشهد التالي' : 'Next view'} aria-label={ar ? 'المشهد التالي' : 'Next view'}><ArrowRight className="w-4 h-4" /></button>
-    <button className={button} onClick={onSelectView} title={ar ? 'تحديد كامل المشهد الحالي' : 'Select current map extent'}><Scan className="w-4 h-4 text-cyan-400" />{ar ? 'تحديد المشهد' : 'Select view'}</button>
-    <button className={button} onClick={() => setOpen(v => !v)} aria-expanded={open}>{icon('YLW-PUSHPIN.png')}{ar ? 'المواقع المحفوظة' : 'Saved places'} ({saved.length})</button>
-    <button className={button} onClick={onOpenTopography}><Mountain className="w-4 h-4 text-amber-400" />{ar ? 'خطوط التسوية' : 'Contours'}</button>
-    {contours && <>
-      <button className={button} onClick={() => onDisplayChange({...display,visible:!display.visible})} aria-pressed={display.visible}>{display.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}{ar ? 'عرض الخطوط' : 'Show contours'}</button>
-      <label className="flex items-center gap-1"><input type="checkbox" checked={display.majorOnly} onChange={e => onDisplayChange({...display,majorOnly:e.target.checked})} />{ar ? 'الرئيسية فقط' : 'Index only'}</label>
-      <label className="flex items-center gap-1">{ar ? 'العتامة' : 'Opacity'}<input className="w-20" type="range" min="10" max="100" value={Math.round(display.opacity*100)} onChange={e => onDisplayChange({...display,opacity:Number(e.target.value)/100})} />{Math.round(display.opacity*100)}%</label>
-      <button className={button} onClick={onClearContours} title={ar ? 'إزالة طبقة التسوية' : 'Remove contour layer'} aria-label={ar ? 'إزالة طبقة التسوية' : 'Remove contour layer'}><Trash2 className="w-4 h-4 text-rose-400" /></button>
-      <span className="text-amber-300">{contours.properties?.interval} m · {contours.features.length} {ar ? 'خط' : 'lines'}</span>
-    </>}
-    {open && <section className="absolute top-full start-3 mt-1 p-3 w-80 max-w-[90vw] rounded border border-slate-700 bg-slate-900 shadow-2xl space-y-2">
+  return <>
+    {open && <section className="fixed top-14 end-3 z-[1100] p-3 w-80 max-w-[90vw] rounded border border-slate-700 bg-slate-900 shadow-2xl space-y-2 text-slate-300 text-[11px]">
+      <div className="flex items-center justify-between"><strong className="text-slate-200">{ar ? 'المواقع المحفوظة' : 'Saved places'} ({saved.length})</strong><button className="p-1 text-slate-400 hover:text-white" onClick={() => setOpen(false)} aria-label={ar ? 'إغلاق' : 'Close'}><X className="w-4 h-4" /></button></div>
+      <button className={button + ' w-full justify-center'} onClick={onSelectView}><Scan className="w-4 h-4 text-cyan-400" />{ar ? 'تحديد كامل المشهد الحالي' : 'Select current map extent'}</button>
       <form className="flex gap-2" onSubmit={e => {e.preventDefault(); save();}}><input aria-label={ar ? 'اسم الموقع' : 'Place name'} maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder={ar ? 'اسم الموقع الحالي' : 'Name this location'} className="min-w-0 flex-1 bg-slate-950 rounded border border-slate-700 p-2" /><button disabled={!name.trim()} className={button} type="submit" title={ar ? 'حفظ الموقع' : 'Save place'} aria-label={ar ? 'حفظ الموقع' : 'Save place'}><Star className="w-4 h-4 text-amber-400" /></button></form>
       {message && <p role="alert" className="text-rose-300">{message}</p>}
       {!saved.length && <p className="text-slate-400 py-2">{ar ? 'احفظ موقعاً للعودة إليه مع خريطة الأساس.' : 'Save a place to restore its position and base map.'}</p>}
@@ -91,5 +81,13 @@ export function MapTools({ lang, currentSource, sources, onSelectSource, onSelec
         <button className="p-2 text-rose-400" onClick={() => persist(saved.filter(s => s.id !== v.id))} aria-label={(ar ? 'حذف ' : 'Delete ') + v.name}><Trash2 className="w-4 h-4" /></button>
       </div>)}</div>
     </section>}
-  </div>;
+    {contours && <section className="fixed bottom-16 end-3 z-[1090] p-2.5 rounded border border-slate-700 bg-slate-900 shadow-2xl flex flex-wrap items-center gap-2 text-slate-300 text-[11px]">
+      <Mountain className="w-4 h-4 text-amber-400" />
+      <button className={button} onClick={() => onDisplayChange({...display,visible:!display.visible})} aria-pressed={display.visible}>{display.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}{ar ? 'عرض الخطوط' : 'Show contours'}</button>
+      <label className="flex items-center gap-1"><input type="checkbox" checked={display.majorOnly} onChange={e => onDisplayChange({...display,majorOnly:e.target.checked})} />{ar ? 'الرئيسية فقط' : 'Index only'}</label>
+      <label className="flex items-center gap-1">{ar ? 'العتامة' : 'Opacity'}<input className="w-20" type="range" min="10" max="100" value={Math.round(display.opacity*100)} onChange={e => onDisplayChange({...display,opacity:Number(e.target.value)/100})} />{Math.round(display.opacity*100)}%</label>
+      <button className={button} onClick={onClearContours} title={ar ? 'إزالة طبقة التسوية' : 'Remove contour layer'} aria-label={ar ? 'إزالة طبقة التسوية' : 'Remove contour layer'}><Trash2 className="w-4 h-4 text-rose-400" /></button>
+      <span className="text-amber-300">{contours.properties?.interval} m · {contours.features.length} {ar ? 'خط' : 'lines'}</span>
+    </section>}
+  </>;
 }
