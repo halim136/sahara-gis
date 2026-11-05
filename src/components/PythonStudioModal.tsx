@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DraggableWindow } from './DraggableWindow';
 import {
   X,
   Play,
@@ -271,7 +272,7 @@ export const PythonStudioModal: React.FC<PythonStudioModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-xs">
+    <DraggableWindow>
       <div className="relative w-full max-w-5xl h-[88vh] flex flex-col bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden text-slate-200">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800">
@@ -396,6 +397,6 @@ export const PythonStudioModal: React.FC<PythonStudioModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </DraggableWindow>
   );
 };

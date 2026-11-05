@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { BoundingBox, MapSource, DownloadJobState } from '../types';
 import { calculateTilesCountInBbox } from '../utils/geoUtils';
+import { DraggableWindow } from './DraggableWindow';
 
 interface SelectionOpsModalProps {
   isOpen: boolean;
@@ -293,7 +294,7 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-xs">
+    <DraggableWindow lang={lang}>
       <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-150">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800">
@@ -811,6 +812,6 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
           )}
         </div>
       </div>
-    </div>
+    </DraggableWindow>
   );
 };

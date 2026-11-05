@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Mountain, Download, RefreshCw, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { AppSettings } from '../utils/settings';
+import { DraggableWindow } from './DraggableWindow';
 import { BoundingBox } from '../types';
 
 interface Props {
@@ -87,7 +88,7 @@ export const TopographyStudioModal: React.FC<Props> = ({ settings, isOpen, onClo
   const meta = contours?.properties;
   const btn = 'px-3 py-2 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 flex items-center justify-center gap-2';
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-xs">
+    <DraggableWindow>
       <section role="dialog" aria-modal="true" aria-labelledby="topo-title" className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 text-slate-200 shadow-2xl text-xs">
         <div className="flex justify-between items-center p-4 border-b border-slate-800">
           <h2 id="topo-title" className="font-bold text-sm flex items-center gap-2"><Mountain className="w-5 h-5 text-amber-400" />{isAr ? 'خطوط التسوية والتضاريس الحقيقية' : 'Real Terrain & Contours'}</h2>
@@ -135,6 +136,6 @@ export const TopographyStudioModal: React.FC<Props> = ({ settings, isOpen, onClo
           <p className="text-slate-500">{isAr ? 'بيانات التضاريس:' : 'Terrain data:'} <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noreferrer" className="underline">Mapzen / AWS Open Data</a> · <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noreferrer" className="underline">{isAr ? 'المصادر والإسناد' : 'Sources & attribution'}</a></p>
         </div>
       </section>
-    </div>
+    </DraggableWindow>
   );
 };

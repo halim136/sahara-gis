@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {X, Settings, Check, RotateCcw, Plus, Trash2, Layers} from 'lucide-react';
 import {AppSettings, DEFAULT_SETTINGS, normalizeSettings} from '../utils/settings';
+import {DraggableWindow} from './DraggableWindow';
 import {MapSource} from '../types';
 import {buildCustomSource} from '../utils/customSources';
 export function SettingsModal({settings,sources,customSources=[],onCustomSourcesChange,onSave,onClose}:{settings:AppSettings;sources:MapSource[];customSources?:MapSource[];onCustomSourcesChange?:(list:MapSource[])=>void;onSave:(s:AppSettings)=>void;onClose:()=>void}) {
@@ -10,7 +11,7 @@ export function SettingsModal({settings,sources,customSources=[],onCustomSources
   const addCustomSource=()=>{try{const source=buildCustomSource({name:csName,kind:csKind,url:csUrl,maxZoom:csZoom,wmsLayers:csLayers,category:csCategory});onCustomSourcesChange?.([...customSources,source]);setCsName('');setCsUrl('');setCsLayers('');setCsError('');}catch(e:any){setCsError(e.message);}};
   const set=<K extends keyof AppSettings>(k:K,v:AppSettings[K])=>setDraft(s=>({...s,[k]:v}));
   const toggle=(k:keyof AppSettings,a:string,e:string)=><label className="settings-check"><input type="checkbox" checked={Boolean(draft[k])} onChange={ev=>setDraft(s=>({...s,[k]:ev.target.checked}))}/>{t(a,e)}</label>;
-  return <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onKeyDown={e=>{if(e.key==='Escape')onClose();}}>
+  return <DraggableWindow onKeyDown={e=>{if(e.key==='Escape')onClose();}}>
     <section className="desktop-dialog w-full max-w-2xl max-h-[90vh] overflow-auto" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div className="desktop-dialog-title"><h2 id="settings-title"><Settings size={17}/>{t('إعدادات البرنامج','Application settings')}</h2><button onClick={onClose} aria-label={t('إغلاق','Close')}><X size={18}/></button></div>
       <div className="desktop-tabs">{[['display','العرض والتنقل','Display & navigation'],['coordinates','الإحداثيات','Coordinates'],['terrain','التضاريس والتحليل','Terrain & analysis'],['sources','مصادر مخصّصة','Custom sources']].map(([id,a,e])=><button key={id} aria-pressed={tab===id} onClick={()=>setTab(id)}>{t(a,e)}</button>)}</div>
@@ -65,5 +66,5 @@ export function SettingsModal({settings,sources,customSources=[],onCustomSources
       </div>
       <div className="desktop-dialog-footer"><button className="desktop-button" onClick={()=>setDraft({...DEFAULT_SETTINGS})}><RotateCcw size={14}/>{t('استعادة الافتراضي','Restore defaults')}</button><div className="flex gap-2"><button className="desktop-button" onClick={onClose}>{t('إلغاء','Cancel')}</button><button className="desktop-button primary" onClick={()=>onSave(normalizeSettings(draft))}><Check size={15}/>{t('حفظ وتطبيق','Save & apply')}</button></div></div>
     </section>
-  </div>;
+  </DraggableWindow>;
 }

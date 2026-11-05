@@ -1,6 +1,7 @@
 import {CRS_OPTIONS,studioRequest} from './AdvancedGisWorkbench';
 import React, {useEffect,useRef,useState} from 'react';
 import {X, Mountain, Download, Play, RefreshCw, Map, Layers, CheckCircle2, AlertCircle} from 'lucide-react';
+import {DraggableWindow} from './DraggableWindow';
 import {BoundingBox} from '../types';
 import {AppSettings} from '../utils/settings';
 export interface TerrainOverlay {url:string; bbox:[number,number,number,number];name:string;}
@@ -19,7 +20,7 @@ export function TerrainWorkbench({bbox,settings,isOfflineMode,onClose,onApply}:{
     try{const response=await fetch('/api/python/topo/arcgis',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({bbox:[bbox.min_lon,bbox.min_lat,bbox.max_lon,bbox.max_lat],source,target_crs:targetCrs,offline:isOfflineMode,resolution,interval,azimuth,altitude,z_factor:zFactor,hydrology,above_sea_only:aboveSea})});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||'Terrain analysis failed');setResult(data.result);setLayer('relief');}
     catch(e:any){if(e.name!=='AbortError')setError(e.message);}finally{setBusy(false);}};
   const meta=result?.metadata;const product=PRODUCTS[layer];
-  return <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3" onKeyDown={e=>{if(e.key==='Escape')onClose();}}>
+  return <DraggableWindow onKeyDown={e=>{if(e.key==='Escape')onClose();}}>
     <section className="desktop-dialog terrain-workbench" role="dialog" aria-modal="true" aria-labelledby="terrain-workbench-title">
       <div className="desktop-dialog-title"><h2 id="terrain-workbench-title"><Mountain size={18}/>{t('تحليل التضاريس وتصدير خرائط ArcGIS','Terrain analysis & ArcGIS export')}</h2><button aria-label={t('إغلاق','Close')} onClick={onClose}><X size={18}/></button></div>
       <div className="terrain-workbench-body">
@@ -67,5 +68,5 @@ export function TerrainWorkbench({bbox,settings,isOfflineMode,onClose,onApply}:{
       </div>
       <div className="desktop-dialog-footer"><span className="text-xs opacity-70">{t('تحليل بيانات ارتفاع حقيقية','Real elevation data analysis')}</span><button className="desktop-button" onClick={onClose}>{t('إغلاق','Close')}</button></div>
     </section>
-  </div>;
+  </DraggableWindow>;
 }

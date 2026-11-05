@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Activity, Mountain, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { ElevationSample } from '../types';
+import { DraggableWindow } from './DraggableWindow';
 
 interface ElevationProfileModalProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export const ElevationProfileModal: React.FC<ElevationProfileModalProps> = ({
     : '';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-xs">
+    <DraggableWindow>
       <div className="relative w-full max-w-3xl flex flex-col bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden text-slate-200">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800">
@@ -230,6 +231,6 @@ export const ElevationProfileModal: React.FC<ElevationProfileModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </DraggableWindow>
   );
 };

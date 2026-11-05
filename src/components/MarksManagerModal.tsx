@@ -18,6 +18,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { MarkItem } from '../types';
+import { DraggableWindow } from './DraggableWindow';
 
 interface MarksManagerModalProps {
   isOpen: boolean;
@@ -205,7 +206,7 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-xs">
+    <DraggableWindow lang={lang}>
       <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden text-slate-200">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800">
@@ -527,6 +528,6 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
         </div>
         )}
       </div>
-    </div>
+    </DraggableWindow>
   );
 };

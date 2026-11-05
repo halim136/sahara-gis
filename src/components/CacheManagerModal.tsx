@@ -1,6 +1,7 @@
 import React,{useState,useEffect,useCallback} from 'react';
 import {X,HardDrive,WifiOff,Wifi,DownloadCloud,RefreshCw,FolderOpen,Copy,Trash2} from 'lucide-react';
 import {MapSource} from '../types';
+import {DraggableWindow} from './DraggableWindow';
 import {getBrowserCacheStats,clearBrowserTileCache,cacheCurrentViewportTiles} from '../utils/tileCache';
 
 interface CacheManagerModalProps {
@@ -51,7 +52,7 @@ export const CacheManagerModal:React.FC<CacheManagerModalProps>=({isOpen,onClose
   };
   if(!isOpen)return null;
   const button='px-3 py-2 rounded border border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-100 flex items-center justify-center gap-2 disabled:opacity-40';
-  return <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70" dir={ar?'rtl':'ltr'}>
+  return <DraggableWindow>
     <section role="dialog" aria-modal="true" aria-labelledby="cache-title" className="w-full max-w-xl bg-slate-900 border border-slate-600 rounded-lg shadow-2xl text-slate-200 max-h-[92vh] flex flex-col overflow-hidden">
       <header className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-950">
         <h2 id="cache-title" className="font-bold flex items-center gap-2"><HardDrive size={19}/>{ar?'كاش الخرائط — cache_gmt':'Map cache — cache_gmt'}</h2>
@@ -81,5 +82,5 @@ export const CacheManagerModal:React.FC<CacheManagerModalProps>=({isOpen,onClose
       </div>
       <footer className="p-3 flex justify-between border-t border-slate-700"><button className={button} disabled={loading} onClick={()=>{void refresh();onCacheUpdated?.();}}><RefreshCw size={14} className={loading?'animate-spin':''}/>{ar?'تحديث':'Refresh'}</button><button onClick={onClose} className={button}>{ar?'إغلاق':'Close'}</button></footer>
     </section>
-  </div>;
+  </DraggableWindow>;
 };
