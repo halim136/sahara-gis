@@ -305,6 +305,7 @@ app.post('/api/python/stitch', async (req, res) => {
   if (format === 'jpg' || format === 'jpeg') ext = 'jpg';
   else if (format === 'png') ext = 'png';
   else if (format === 'geotiff' || format === 'tif' || format === 'tiff') ext = 'tif';
+  else if (format === 'jp2' || format === 'jpeg2000' || format === 'ecw') ext = 'jp2';
 
   const outFileName = `stitch_${source_id}_z${zoom}_${Date.now()}.${ext}`;
   const outFilePath = path.join(EXPORTS_DIR, outFileName);
@@ -327,7 +328,7 @@ print(json.dumps(res))
   const result = await executePython(['-c', pyCode]);
   try {
     const data = JSON.parse(result.stdout);
-    const wfExt = ext === 'jpg' ? '.jgw' : (ext === 'png' ? '.pgw' : (ext === 'tif' ? '.tfw' : '.bpw'));
+    const wfExt = ext === 'jpg' ? '.jgw' : (ext === 'png' ? '.pgw' : (ext === 'tif' ? '.tfw' : (ext === 'jp2' ? '.j2w' : '.bpw')));
     const wfName = path.basename(data.world_file_path || outFileName.replace(`.${ext}`, wfExt));
     data.download_url = `/exports/${outFileName}`;
     data.world_file_url = `/exports/${wfName}`;

@@ -302,6 +302,8 @@ export default function App() {
       <HeaderNavbar
         currentSource={currentSource}
         sources={allSources}
+        compareSource={compareSource}
+        onCompareSource={setCompareSource}
         overlays={DEFAULT_OVERLAYS}
         activeOverlays={activeOverlays}
         selectionMode={selectionMode}
@@ -467,6 +469,8 @@ export default function App() {
           onAddMark={(m) => setMarks((prev) => [...prev, m])}
           onDeleteMark={(id) => setMarks((prev) => prev.filter((m) => m.id !== id))}
           onImportMarks={(newMarks) => setMarks((prev) => [...prev, ...newMarks])}
+          onToggleMark={(id) => setMarks((prev) => prev.map((m) => m.id === id ? { ...m, hidden: !m.hidden } : m))}
+          onSetAllHidden={(hidden) => setMarks((prev) => prev.map((m) => ({ ...m, hidden })))}
           lang={lang}
         />
       )}

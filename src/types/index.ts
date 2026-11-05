@@ -50,6 +50,7 @@ export interface MarkItem {
   gpxKind?: 'wpt'|'trk'|'rte';
   trackSegments?: {lon:number;lat:number;ele?:number;time?:string;hdop?:number}[][];
   properties?: Record<string, any>;
+  hidden?: boolean;
 }
 
 export interface MeasurementData {

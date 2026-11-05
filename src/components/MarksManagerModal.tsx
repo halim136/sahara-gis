@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   X,
   MapPin,
@@ -12,7 +12,10 @@ import {
   FolderOpen,
   Table,
   Search,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileUp,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { MarkItem } from '../types';
 
@@ -23,6 +26,8 @@ interface MarksManagerModalProps {
   onAddMark: (mark: MarkItem) => void;
   onDeleteMark: (id: string) => void;
   onImportMarks: (marks: MarkItem[]) => void;
+  onToggleMark?: (id: string) => void;
+  onSetAllHidden?: (hidden: boolean) => void;
   lang: 'ar' | 'en';
 }
 
@@ -33,6 +38,8 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
   onAddMark,
   onDeleteMark,
   onImportMarks,
+  onToggleMark,
+  onSetAllHidden,
   lang
 }) => {
   const isAr = lang === 'ar';
@@ -42,6 +49,8 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
   const [importText, setImportText] = useState<string>('');
   const [isImporting, setIsImporting] = useState<boolean>(false);
   const [importMessage, setImportMessage] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const anyVisible = marks.some((m) => !m.hidden);
 
   // New Mark Form
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
@@ -138,6 +147,36 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Binary/point·line·polygon file import (KML/KMZ/GPX/GeoJSON/Shapefile ZIP/SML/DB3).
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setImportMessage(isAr ? 'جاري قراءة الملف…' : 'Reading file…');
+    try {
+      const res = await fetch('/api/studio/upload/vector', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream', 'X-File-Name': encodeURIComponent(file.name) },
+        body: file
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      const imported: MarkItem[] = data.result?.marks || [];
+      if (imported.length > 0) {
+        onImportMarks(imported);
+        setImportMessage(
+          isAr
+            ? `تم استيراد ${imported.length} عنصراً من ${file.name} (${data.result.format})`
+            : `Imported ${imported.length} features from ${file.name} (${data.result.format})`
+        );
+      } else {
+        setImportMessage(isAr ? 'لم يتم العثور على عناصر صالحة في الملف' : 'No valid features found in the file');
+      }
+    } catch (e: any) {
+      setImportMessage(`${isAr ? 'خطأ الاستيراد:' : 'Import error:'} ${e.message}`);
+    }
+  };
+
   const handleImport = async () => {
     if (!importText) return;
     setImportMessage('');
@@ -199,13 +238,40 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
               <span>{isAr ? 'إضافة علامة جديدة' : 'Add New Mark'}</span>
             </button>
 
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".kml,.kmz,.gpx,.geojson,.json,.zip,.sml,.db3"
+              onChange={handleFileImport}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+              title={isAr ? 'استيراد ملف نقطي أو خطي أو مساحي' : 'Import point / line / polygon file'}
+            >
+              <FileUp className="w-3.5 h-3.5 text-teal-400" />
+              <span>{isAr ? 'استيراد ملف (KML·GPX·SML·DB3·SHP)' : 'Import file'}</span>
+            </button>
+
             <button
               onClick={() => setIsImporting(!isImporting)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
             >
               <Upload className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isAr ? 'استيراد (GPX / KML / GeoJSON)' : 'Import File'}</span>
+              <span>{isAr ? 'لصق نص (GPX / KML / GeoJSON)' : 'Paste text'}</span>
             </button>
+
+            {onSetAllHidden && marks.length > 0 && (
+              <button
+                onClick={() => onSetAllHidden(anyVisible)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                title={isAr ? 'إظهار أو إخفاء كل العلامات على الخريطة' : 'Show or hide all marks on the map'}
+              >
+                {anyVisible ? <EyeOff className="w-3.5 h-3.5 text-slate-300" /> : <Eye className="w-3.5 h-3.5 text-emerald-400" />}
+                <span>{anyVisible ? (isAr ? 'إخفاء الكل' : 'Hide all') : (isAr ? 'إظهار الكل' : 'Show all')}</span>
+              </button>
+            )}
 
             <button
               onClick={() => setTableView((v) => !v)}
@@ -417,7 +483,7 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
             </div>
           ) : (
             filteredMarks.map((mark) => (
-              <div key={mark.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+              <div key={mark.id} className={`py-2.5 flex items-center justify-between gap-3 text-xs ${mark.hidden ? 'opacity-45' : ''}`}>
                 <div className="flex items-center gap-3">
                   <div
                     className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs"
@@ -438,6 +504,15 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
                   <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
                     {mark.category || 'General'}
                   </span>
+                  {onToggleMark && (
+                    <button
+                      onClick={() => onToggleMark(mark.id)}
+                      className="p-1 rounded text-slate-500 hover:text-sky-300 hover:bg-sky-950/30 transition-colors"
+                      title={mark.hidden ? (isAr ? 'إظهار على الخريطة' : 'Show on map') : (isAr ? 'إخفاء من الخريطة' : 'Hide from map')}
+                    >
+                      {mark.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  )}
                   <button
                     onClick={() => onDeleteMark(mark.id)}
                     className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"

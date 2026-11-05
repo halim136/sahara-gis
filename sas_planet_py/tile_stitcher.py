@@ -200,6 +200,14 @@ class TileStitcher:
                                dtype="uint8", crs=target, transform=output_transform, compress="deflate") as dataset:
                 dataset.write(output_pixels)
             wf_ext = ".tfw"
+        elif out_ext == ".jp2":
+            # JPEG 2000 wavelet raster (open ECW-equivalent). The proprietary ECW
+            # format needs the licensed ERDAS SDK, which cannot be bundled; JP2 is
+            # the open wavelet format read the same way by QGIS/ArcGIS/Global Mapper.
+            with rasterio.open(output_image_path, "w", driver="JP2OpenJPEG", width=output_width, height=output_height,
+                               count=3, dtype="uint8", crs=target, transform=output_transform) as dataset:
+                dataset.write(output_pixels)
+            wf_ext = ".j2w"
         elif out_ext in (".jpg", ".jpeg"):
             rendered.save(output_image_path, "JPEG", quality=90, optimize=True); wf_ext = ".jgw"
         elif out_ext == ".png":

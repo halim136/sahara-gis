@@ -69,6 +69,8 @@
 .desktop-tool:nth-of-type(4n+2) {color:#229784;}
 .desktop-tool:nth-of-type(4n+3) {color:#b27b24;}
 .desktop-separator {height:27px;border-inline-start:1px solid var(--line);margin:0 4px;}
+/* Native <option> popups default to white-on-white on Windows; force a readable dark popup everywhere. */
+.sas-desktop select option,.sas-desktop optgroup,select option,select optgroup {background:#1e293b;color:#e2e8f0;}
 .desktop-source {display:flex;align-items:center;gap:5px;color:var(--accent);padding:0 5px;}
 .desktop-source select {font-size:12px;max-width:220px;color:var(--ink);background:transparent;padding:4px 2px;border:none;}
 .desktop-toolbar-note {font-size:11px;opacity:.5;padding-inline:10px;white-space:nowrap;}

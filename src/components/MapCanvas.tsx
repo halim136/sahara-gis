@@ -111,6 +111,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       attributionControl: false
     });
 
+    // Dedicated panes keep a fixed stacking order: base map at the bottom, the
+    // swipe-compare layer just above it, then all overlays/grids ABOVE the base
+    // so switching the base source can never bury the active overlays.
+    map.createPane('sas-base').style.zIndex = '200';
+    map.createPane('sas-compare').style.zIndex = '210';
+    map.createPane('sas-overlays').style.zIndex = '350';
+
     // Add scale control
     L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
 
@@ -306,7 +313,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     // User-added custom sources render directly (not via the disk tile cache).
     let newLayer: L.TileLayer;
     if (currentSource.custom) {
-      const common = { maxZoom: currentSource.max_zoom || 19, attribution: currentSource.attribution || '', className: 'sas-map-base-tile' };
+      const common = { pane: 'sas-base', maxZoom: currentSource.max_zoom || 19, attribution: currentSource.attribution || '', className: 'sas-map-base-tile' };
       if (currentSource.kind === 'wms') {
         const base = currentSource.url_template.split('?')[0];
         newLayer = L.tileLayer.wms(base, { layers: currentSource.wmsLayers || '', format: 'image/png', transparent: false, version: '1.3.0', ...common } as any);
@@ -316,6 +323,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     } else {
       newLayer = createOfflineAwareTileLayer(currentSource.id, currentSource.url_template, {
         subdomains,
+        pane: 'sas-base',
         maxZoom: currentSource.max_zoom || 21,
         attribution: currentSource.attribution || '',
         isOfflineMode
@@ -332,9 +340,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (!map) return;
     if (compareLayerRef.current) { map.removeLayer(compareLayerRef.current); compareLayerRef.current = null; }
     if (!compareSource) return;
-    if (!map.getPane('sas-compare')) map.createPane('sas-compare');
-    const pane = map.getPane('sas-compare')!;
-    pane.style.zIndex = '250';
+    if (!map.getPane('sas-compare')) { map.createPane('sas-compare').style.zIndex = '210'; }
     const sub = compareSource.subdomains && compareSource.subdomains.length > 0 ? compareSource.subdomains : ['a', 'b', 'c'];
     const common: any = { pane: 'sas-compare', maxZoom: compareSource.max_zoom || 21, attribution: '' };
     let layer: L.TileLayer;
@@ -370,6 +376,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (activeOverlays.has(hybridId)) {
       const l = createOfflineAwareTileLayer(hybridId, 'https://mt{s}.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', {
         subdomains: ['0', '1', '2', '3'],
+        pane: 'sas-overlays',
         maxZoom: 22,
         opacity: 0.95,
         isOfflineMode,
@@ -382,6 +389,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     const seaId = 'openseamap';
     if (activeOverlays.has(seaId)) {
       const l = createOfflineAwareTileLayer(seaId, 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+        pane: 'sas-overlays',
         maxZoom: 18,
         opacity: 0.9,
         isOfflineMode,
@@ -446,7 +454,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           return tile;
         }
       });
-      const gLayer = new (CustomGrid as any)();
+      const gLayer = new (CustomGrid as any)({ pane: 'sas-overlays' });
       gLayer.addTo(map);
       gridLayerRef.current = gLayer;
     }
@@ -532,6 +540,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     group.clearLayers();
 
     marks.forEach((mark) => {
+      if (mark.hidden) return;
       const color = /^#[0-9a-f]{3,8}$/i.test(mark.color||'')?mark.color!:'#ef4444';
       const escape=(value:unknown)=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
       const markName=escape(mark.name),description=escape(mark.description);
@@ -643,15 +652,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       </aside>}
       <div className="relative flex-1 min-w-0 h-full">
         <div ref={mapContainerRef} className="w-full h-full z-10" />
-        {onCompareSource && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-1.5 bg-slate-900/85 text-white text-[11px] rounded px-2 py-1 shadow">
-            <span>{settings.language === 'ar' ? 'مقارنة' : 'Compare'}</span>
-            <select value={compareSource?.id || ''} onChange={e => onCompareSource(sources.find(s => s.id === e.target.value) || null)} className="bg-slate-800 rounded px-1 py-0.5 outline-none">
-              <option value="">{settings.language === 'ar' ? 'إيقاف' : 'Off'}</option>
-              {sources.filter(s => s.id !== currentSource.id).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-        )}
         {compareSource && (
           <>
             <div className="absolute top-0 bottom-0 z-[400] w-0.5 bg-white/90 shadow pointer-events-none" style={{ left: `${swipeRatio * 100}%` }} />

@@ -606,7 +606,15 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
                       <option value="bmp">Windows 24-bit BMP + WorldFile (.bpw + .prj)</option>
                       <option value="geotiff">GeoTIFF (embedded CRS)</option>
                       <option value="jpg">JPEG + WorldFile (.jgw)</option>
+                      <option value="jp2">{isAr ? 'JPEG 2000 ضاغط موجي (.jp2) — بديل ECW المفتوح' : 'JPEG 2000 wavelet (.jp2) — open ECW alternative'}</option>
                     </select>
+                    {stitchFormat === 'jp2' && (
+                      <p className="mt-1 text-[10px] text-amber-300/90 leading-relaxed">
+                        {isAr
+                          ? 'صيغة ECW تتطلب حزمة ERDAS المرخّصة وتعذّر تضمينها. JPEG 2000 (.jp2) هي البديل المفتوح بالضغط الموجي نفسه، وتقرؤها QGIS و ArcGIS و Global Mapper مباشرةً مع الإسناد الجغرافي.'
+                          : 'ECW needs the licensed ERDAS SDK (cannot be bundled). JPEG 2000 (.jp2) is the open wavelet equivalent — QGIS, ArcGIS and Global Mapper read it directly, georeferenced.'}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">

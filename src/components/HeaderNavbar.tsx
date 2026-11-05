@@ -1,5 +1,5 @@
 import React, {useEffect,useRef,useState} from 'react';
-import {MousePointer2, SquareDashed, Ruler, Crosshair, Search, MapPin, Layers, Star, Navigation, Settings, Download, Mountain, ChartNoAxesCombined, HardDrive, Terminal, ChevronDown, Globe, Plus, Minus, Grid3X3, Trash2, Pentagon, HelpCircle, WifiOff} from 'lucide-react';
+import {MousePointer2, SquareDashed, Ruler, Crosshair, Search, MapPin, Layers, Star, Navigation, Settings, Download, Mountain, ChartNoAxesCombined, HardDrive, Terminal, ChevronDown, Globe, Plus, Minus, Grid3X3, Trash2, Pentagon, HelpCircle, WifiOff, Columns2} from 'lucide-react';
 import {MapSource,SelectionMode} from '../types';
 interface HeaderNavbarProps {
   currentSource: MapSource;
@@ -31,6 +31,8 @@ interface HeaderNavbarProps {
   onToggleMapTools: () => void;
   showMapTools: boolean;
   extraTools?: React.ReactNode;
+  compareSource?: MapSource | null;
+  onCompareSource?: (source: MapSource | null) => void;
 }
 
 
@@ -72,6 +74,7 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = (p) => {
       {tool(t('معالجة التحديد','Process selection'),Download,p.onOpenSelectionOps,false,!p.hasSelection)}
       <span className="desktop-separator"/>
       <label className="desktop-source"><Globe size={22}/><select aria-label={t('خريطة الأساس','Base map')} value={p.currentSource.id} onChange={e=>{const s=p.sources.find(s=>s.id===e.target.value);if(s)p.onSelectSource(s);}}>{p.sources.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+      {p.onCompareSource&&<label className="desktop-source" title={t('مقارنة بالتمرير: اعرض طبقة ثانية على نصف الخريطة واسحب المقبض','Swipe compare: show a second layer over half the map and drag the handle')}><Columns2 size={20} className={p.compareSource?'text-amber-400':undefined}/><select aria-label={t('طبقة المقارنة','Compare layer')} value={p.compareSource?.id||''} onChange={e=>{const s=p.sources.find(s=>s.id===e.target.value);p.onCompareSource!(s||null);}}><option value="">{t('مقارنة: إيقاف','Compare: off')}</option>{p.sources.filter(s=>s.id!==p.currentSource.id).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
       {tool(t('الطبقات والشبكات','Layers & grids'),Layers,()=>setOpen(open==='layers'?null:'layers'),open==='layers')}
       <span className="desktop-separator"/>
       {tool(t('المواقع المحفوظة','Saved places'),Star,()=>{if(!p.showMapTools)p.onToggleMapTools();window.dispatchEvent(new Event('sas:open-favorites'));})}
