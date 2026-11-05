@@ -15,6 +15,8 @@ interface HeaderNavbarProps {
   onOpenSelectionOps: () => void;
   onOpenPythonStudio: () => void;
   onOpenMarksManager: () => void;
+  onDigitizeLine?: () => void;
+  onDigitizePolygon?: () => void;
   onOpenTopographyStudio: () => void;
   onOpenSpatialAnalysis: () => void;
   onOpenGpsSimulator: () => void;
@@ -54,7 +56,7 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = (p) => {
         {menu('maps',t('خرائط','Maps'),p.sources.map(s=>item(s.name,Globe,()=>p.onSelectSource(s),false,p.currentSource.id===s.id)))}
         {menu('layers',t('طبقات','Layers'),p.overlays.map(s=>item(s.name,s.is_grid?Grid3X3:Layers,()=>p.onToggleOverlay(s.id),false,p.activeOverlays.has(s.id))))}
         {menu('favorites',t('مفضلة','Favorites'),<>{item(t('المواقع المحفوظة','Saved places'),Star,()=>window.dispatchEvent(new Event('sas:open-favorites')))}{item(t('الانتقال إلى إحداثيات','Go to coordinates'),Crosshair,p.onOpenGoTo)}</>)}
-        {menu('marks',t('علامات','Marks'),<>{item(t('مدير العلامات','Marks manager'),MapPin,p.onOpenMarksManager)}{item(t('رسم مسار','Draw a path'),Ruler,()=>p.onSetSelectionMode('polyline'))}{item(t('تحديد مضلع','Select polygon'),Pentagon,()=>p.onSetSelectionMode('polygon'))}</>)}
+        {menu('marks',t('علامات','Marks'),<>{item(t('مدير العلامات','Marks manager'),MapPin,p.onOpenMarksManager)}{item(t('رسم خط/طريق (عنصر)','Draw line/route (feature)'),Ruler,()=>p.onDigitizeLine?.())}{item(t('رسم مضلّع/مساحة (عنصر)','Draw polygon/area (feature)'),Pentagon,()=>p.onDigitizePolygon?.())}{item(t('قياس مسافة','Measure distance'),Ruler,()=>p.onSetSelectionMode('polyline'))}{item(t('تحديد مضلع','Select polygon'),Pentagon,()=>p.onSetSelectionMode('polygon'))}</>)}
         {menu('gps','GPS',<>{item(t('اتصال GPS حقيقي','Connect real GPS'),Navigation,()=>window.dispatchEvent(new CustomEvent('sas:field-tools',{detail:'gps'})))}{item(t('مسارات GPX والتحليل','GPX tracks & analysis'),Ruler,()=>window.dispatchEvent(new CustomEvent('sas:field-tools',{detail:'tracks'})))}{item(t('محاكاة GPS','GPS simulation'),Navigation,p.onOpenGpsSimulator)}</>)}
         {menu('analysis',t('تحليل','Analysis'),<>{item(t('تحليل التضاريس و ArcGIS','Terrain analysis & ArcGIS'),ChartNoAxesCombined,p.onOpenTerrainAnalysis)}{item(t('خطوط التسوية','Contours'),Mountain,p.onOpenTopographyStudio)}{item(t('مخطط الارتفاعات','Elevation profile'),ChartNoAxesCombined,p.onOpenElevation)}{item(t('حرم مكاني وخط الرؤية','Buffer & line of sight'),Crosshair,p.onOpenSpatialAnalysis)}</>)}
         <button className="desktop-menu-label" onClick={p.onOpenSettings}>{t('إعدادات','Settings')}</button>

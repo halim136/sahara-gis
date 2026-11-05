@@ -165,6 +165,8 @@ export default function App() {
   const [selectedBbox, setSelectedBbox] = useState<BoundingBox | null>(null);
   const [selectedPolygon, setSelectedPolygon] = useState<[number, number][] | null>(null);
   const [measurementPoints, setMeasurementPoints] = useState<[number, number][]>([]);
+  const [digitize, setDigitize] = useState<null | 'linestring' | 'polygon'>(null);
+  const [digitizeName, setDigitizeName] = useState<string>('');
 
   // Marks
   const markHistory = useHistoryState<MarkItem[]>(()=>{try{return JSON.parse(localStorage.getItem('sas:marks:v1')||'null')||INITIAL_MARKS;}catch{return INITIAL_MARKS;}});
@@ -316,6 +318,8 @@ export default function App() {
         onOpenSelectionOps={() => setIsSelectionOpsOpen(true)}
         onOpenPythonStudio={() => setIsPythonStudioOpen(true)}
         onOpenMarksManager={() => setIsMarksManagerOpen(true)}
+        onDigitizeLine={()=>{setDigitize('linestring');setDigitizeName('');setSelectedPolygon(null);setMeasurementPoints([]);setSelectionMode('polyline');}}
+        onDigitizePolygon={()=>{setDigitize('polygon');setDigitizeName('');setSelectedPolygon(null);setMeasurementPoints([]);setSelectionMode('polygon');}}
         onOpenTopographyStudio={openTopography}
         onOpenSpatialAnalysis={() => setIsSpatialAnalysisOpen(true)}
         onOpenGpsSimulator={() => setIsGpsSimulatorOpen(true)}
@@ -379,7 +383,17 @@ export default function App() {
           onSetPolygon={(pts) => {
             setSelectedPolygon(pts);
           }}
-          onFinishDrawing={(mode,points)=>{if(mode==='polyline')setMeasurementPoints(points);if(mode==='polygon'){setSelectedBbox(null);setSelectedPolygon(points);if(studioDrawing){setStudioDrawing(false);setStudioOpen(true);}}setSelectionMode('none');}}
+          onFinishDrawing={(mode,points)=>{
+            if(digitize){
+              const min=digitize==='polygon'?3:2;
+              if(points.length>=min){
+                const coords=points.map(([la,lo])=>[lo,la] as [number,number]);
+                setMarks(m=>[...m,{id:'feat_'+Date.now(),name:digitizeName.trim()||(digitize==='polygon'?(isAr?'مضلّع':'Polygon'):(isAr?'طريق':'Route')),type:digitize,coords,category:digitize==='polygon'?(isAr?'مساحات':'Areas'):(isAr?'طرق':'Routes'),color:'#ef4444',timestamp:new Date().toISOString()} as MarkItem]);
+              }
+              setDigitize(null);setSelectedPolygon(null);setMeasurementPoints([]);setSelectionMode('none');return;
+            }
+            if(mode==='polyline')setMeasurementPoints(points);if(mode==='polygon'){setSelectedBbox(null);setSelectedPolygon(points);if(studioDrawing){setStudioDrawing(false);setStudioOpen(true);}}setSelectionMode('none');
+          }}
           onSetMeasurementPoints={(pts) => {
             setMeasurementPoints(pts);
           }}
@@ -392,7 +406,18 @@ export default function App() {
         <FieldLayers state={field} offline={isOfflineMode} onError={setFieldError}/>
         {fieldError&&<div role="status" className="absolute bottom-12 start-12 z-30 desktop-dialog p-2 text-xs max-w-sm">{fieldError}</div>}
         {studioDrawing&&<button className="absolute top-14 end-3 z-[400] desktop-button" onClick={()=>{setSelectionMode('none');setStudioDrawing(false);setStudioOpen(true);}}>{isAr?'عودة للأدوات':'Return to tools'}</button>}
-        {measurementPoints.length>=2&&<section className="absolute top-3 start-12 z-30 desktop-dialog p-3 text-sm min-w-64" aria-label={isAr?'نتيجة قياس المسافة':'Distance measurement'}>
+        {digitize&&<section className="absolute top-3 start-12 z-30 desktop-dialog p-3 text-sm min-w-72" aria-label={isAr?'رسم عنصر':'Draw feature'}>
+          <strong>{isAr?'رسم عنصر جديد':'Draw new feature'} — {digitize==='polygon'?(isAr?'مضلّع / مساحة':'Polygon / area'):(isAr?'خط / طريق':'Line / route')}</strong>
+          <input value={digitizeName} onChange={e=>setDigitizeName(e.target.value)} placeholder={isAr?'اسم العنصر (اختياري)':'Feature name (optional)'} maxLength={80}/>
+          <p className="text-xs mt-1 opacity-80">{isAr?'انقر على الخريطة لإضافة نقاط، ثم «إنهاء وحفظ» أو انقر مرتين.':'Click the map to add points, then Finish & save (or double-click).'}</p>
+          {digitize==='linestring'&&measurementPoints.length>=2&&<p className="text-xs mt-1">{isAr?'الطول: ':'Length: '}{distanceText(pathMeasurement(measurementPoints).distance,isAr)}</p>}
+          <div className="flex gap-2 mt-2">
+            <button className="desktop-button primary" onClick={()=>window.dispatchEvent(new CustomEvent('sas:drawing-command',{detail:'finish'}))}>{isAr?'إنهاء وحفظ':'Finish & save'}</button>
+            <button className="desktop-button" onClick={()=>window.dispatchEvent(new CustomEvent('sas:drawing-command',{detail:'undo'}))}>{isAr?'تراجع':'Undo'}</button>
+            <button className="desktop-button" onClick={()=>{setDigitize(null);setSelectedPolygon(null);setMeasurementPoints([]);setSelectionMode('none');}}>{isAr?'إلغاء':'Cancel'}</button>
+          </div>
+        </section>}
+        {measurementPoints.length>=2&&!digitize&&<section className="absolute top-3 start-12 z-30 desktop-dialog p-3 text-sm min-w-64" aria-label={isAr?'نتيجة قياس المسافة':'Distance measurement'}>
           <strong data-testid="distance-result">{isAr?'المسافة: ':'Distance: '}{distanceText(pathMeasurement(measurementPoints).distance,isAr)}</strong>
           <p className="text-xs mt-1">{isAr?'عدد المقاطع: ':'Segments: '}{measurementPoints.length-1} · WGS84</p>
           <p className="text-xs mt-1">{selectionMode==='polyline'?(isAr?'قياس جارٍ — انقر مرتين أو اضغط إنهاء':'Measuring — double click or Finish'):(isAr?'اكتمل القياس':'Measurement complete')}</p>
