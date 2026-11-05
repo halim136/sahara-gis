@@ -1,0 +1,21 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+releases/
+
+cache_gmt/
+
+# Added for GitHub publishing (lean source repo)
+cache/
+.codex-attachments/
+__pycache__/
+*.pyc
+public/exports/
+*.sml
+*.db3

@@ -1,0 +1,7 @@
+{
+  "name": "sahara-gis",
+  "productName": "Sahara GIS",
+  "version": "1.5.0",
+  "main": "main.cjs",
+  "description": "Portable Sahara GIS desktop window"
+}

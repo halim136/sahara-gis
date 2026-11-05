@@ -1,0 +1,135 @@
+[
+  {
+    "name": "affine",
+    "version": "3.0.1",
+    "file": "affine-3.0.1-py3-none-any.whl",
+    "sha256": "cda3b303325e7bf2bf34817e68753a0d1c4cacbdd451fe67c4878dc2ecbaa540",
+    "url": "https://files.pythonhosted.org/packages/3d/87/e62f55c956b583380e7d2a71705dfd431ee32dd1689d50491ba0c610fc11/affine-3.0.1-py3-none-any.whl"
+  },
+  {
+    "name": "arabic-reshaper",
+    "version": "3.0.1",
+    "file": "arabic_reshaper-3.0.1-py3-none-any.whl",
+    "sha256": "41c5adc2420f85758eada7e880251c4b6a2adbd83377bd27e5d4eba71f648bc7",
+    "url": "https://files.pythonhosted.org/packages/6e/7d/77752d819ede528c664ecf4de974b17b049e054a14537b74b53c8568014f/arabic_reshaper-3.0.1-py3-none-any.whl"
+  },
+  {
+    "name": "attrs",
+    "version": "26.1.0",
+    "file": "attrs-26.1.0-py3-none-any.whl",
+    "sha256": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
+    "url": "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl"
+  },
+  {
+    "name": "certifi",
+    "version": "2026.10.23",
+    "file": "certifi-2026.10.23-py3-none-any.whl",
+    "sha256": "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1",
+    "url": "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl"
+  },
+  {
+    "name": "charset-normalizer",
+    "version": "3.5.2",
+    "file": "charset_normalizer-3.5.2-cp313-cp313-win_amd64.whl",
+    "sha256": "78456a747de8dc58360ffa581f30a002baf5aa28cb262536545e91f113ed7639",
+    "url": "https://files.pythonhosted.org/packages/9c/76/b8ec57f4e9ee3253541abf95e4a462c0175fe8032dcd070f1f2421240942/charset_normalizer-3.5.2-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "click",
+    "version": "8.5.0",
+    "file": "click-8.5.0-py3-none-any.whl",
+    "sha256": "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360",
+    "url": "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl"
+  },
+  {
+    "name": "geographiclib",
+    "version": "2.1",
+    "file": "geographiclib-2.1-py3-none-any.whl",
+    "sha256": "e2a873b9b9e7fc38721ad73d5f4e6c9ed140d428a339970f505c07056997d40b",
+    "url": "https://files.pythonhosted.org/packages/31/b3/802576f2ea5dcb48501bb162e4c7b7b3ca5654a42b2c968ef98a797a4c79/geographiclib-2.1-py3-none-any.whl"
+  },
+  {
+    "name": "manifold3d",
+    "version": "3.5.4",
+    "file": "manifold3d-3.5.4-cp313-cp313-win_amd64.whl",
+    "sha256": "76975aa4ebd18dcb0481e43dac3ed70d78066e9ad047e73a5f7dbc0df1553cf4",
+    "url": "https://files.pythonhosted.org/packages/ea/7a/316e60dea127721fcd523210c2e6c641ab2fa5f6c957eb8a83222f0d7ee4/manifold3d-3.5.4-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "numpy",
+    "version": "2.5.4",
+    "file": "numpy-2.5.4-cp313-cp313-win_amd64.whl",
+    "sha256": "8b4d2fd2d34e5f8c9235ee787de5631a37a28402b15cb80814df973d2be54129",
+    "url": "https://files.pythonhosted.org/packages/90/8c/140a40398a66b4471211be1affdb6ed24c486d581bd28d07b7f2fcb69540/numpy-2.5.4-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "opencv-python-headless",
+    "version": "4.14.0.94",
+    "file": "opencv_python_headless-4.14.0.94-cp37-abi3-win_amd64.whl",
+    "sha256": "cbed65415b8f6a9541c705afe3e64795840524d0ff3bc58f507826284a1dc64b",
+    "url": "https://files.pythonhosted.org/packages/ad/8d/db8673846ee53cbb5de4c2b4decc11cf733e203eb7d5146297869f69bd48/opencv_python_headless-4.14.0.94-cp37-abi3-win_amd64.whl"
+  },
+  {
+    "name": "pillow",
+    "version": "12.3.0",
+    "file": "pillow-12.3.0-cp313-cp313-win_amd64.whl",
+    "sha256": "1cca606cd25738df4ed873d5ad46bbdb3d83b5cbca291f6b4ff13a4df6b0bbe8",
+    "url": "https://files.pythonhosted.org/packages/a6/9b/7a58e61d62be561da3a356fe2384d4059a6345fc130e23ef1c36a5b81d24/pillow-12.3.0-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "pyparsing",
+    "version": "3.3.3",
+    "file": "pyparsing-3.3.3-py3-none-any.whl",
+    "sha256": "ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4",
+    "url": "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl"
+  },
+  {
+    "name": "pypdf",
+    "version": "6.21.4",
+    "file": "pypdf-6.21.4-py3-none-any.whl",
+    "sha256": "33e4fb41ca352810eb4e9838aa0d82d6888a5f8bf682f43e99cce5faa666255c",
+    "url": "https://files.pythonhosted.org/packages/3f/4b/77e8ad4ac42c9d93600f40541a50e9feb3a61d2bbee2d76f659346072051/pypdf-6.21.4-py3-none-any.whl"
+  },
+  {
+    "name": "pyproj",
+    "version": "3.8.0",
+    "file": "pyproj-3.8.0-cp313-cp313-win_amd64.whl",
+    "sha256": "d7b542e249eb593c1af737b7124648868383b69744ab6a1a0a2ffd0113c997f4",
+    "url": "https://files.pythonhosted.org/packages/b7/70/c5477f4bcc1e1dfeb53ba082f8102467a5675f66ffc21fce1f2564c5ce5d/pyproj-3.8.0-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "python-bidi",
+    "version": "0.6.7",
+    "file": "python_bidi-0.6.7-cp313-cp313-win_amd64.whl",
+    "sha256": "f57726b5a90d818625e6996f5116971b7a4ceb888832337d0e2cf43d1c362a90",
+    "url": "https://files.pythonhosted.org/packages/30/ba/a811c12c1a4b8fa7c0c0963d92c042284c2049b1586615af6b1774b786d9/python_bidi-0.6.7-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "rasterio",
+    "version": "1.5.2",
+    "file": "rasterio-1.5.2-cp313-cp313-win_amd64.whl",
+    "sha256": "edbf60e95cb26604b7b884a7edf64a778a0f5ab64aed6f0b7dc9c1664967ae0c",
+    "url": "https://files.pythonhosted.org/packages/07/e1/bbe71985a0a76403f5189a6c653dc94fe36ddd4a02cc0e3a55d6436e06c2/rasterio-1.5.2-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "reportlab",
+    "version": "4.5.1",
+    "file": "reportlab-4.5.1-py3-none-any.whl",
+    "sha256": "06fce8cb56c83307cfa4909cdf4e6a2ddbb44e5d6ef4d2edca896d7e9769f091",
+    "url": "https://files.pythonhosted.org/packages/a7/45/ea7fad10122440de6e845568d106bffdc456ca0e8a1d8ae10b46016087e4/reportlab-4.5.1-py3-none-any.whl"
+  },
+  {
+    "name": "shapely",
+    "version": "2.2.0",
+    "file": "shapely-2.2.0-cp313-cp313-win_amd64.whl",
+    "sha256": "1eaa2cb64cdedaf65d6bc86f2819c9cd7d6d68f969aa3ebfdc93743ab581f437",
+    "url": "https://files.pythonhosted.org/packages/25/ed/7fcd625c9796e61d815ca9545d4e44a16f075f83869c1532206de88f23f1/shapely-2.2.0-cp313-cp313-win_amd64.whl"
+  },
+  {
+    "name": "typing_extensions",
+    "version": "4.16.0",
+    "file": "typing_extensions-4.16.0-py3-none-any.whl",
+    "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+    "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+  }
+]

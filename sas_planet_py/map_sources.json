@@ -1,0 +1,218 @@
+{
+  "MAP_SOURCES": {
+    "google_sat": {
+      "id": "google_sat",
+      "name": "Google Satellite",
+      "category": "Satellite",
+      "url_template": "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+      "subdomains": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "max_zoom": 22,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Google Maps",
+      "cache_name": "sat"
+    },
+    "google_hybrid": {
+      "id": "google_hybrid",
+      "name": "Google Hybrid",
+      "category": "Hybrid",
+      "url_template": "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+      "subdomains": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "max_zoom": 22,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Google Maps",
+      "cache_name": "Google.Hybrid"
+    },
+    "google_roads": {
+      "id": "google_roads",
+      "name": "Google Streets",
+      "category": "Map",
+      "url_template": "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+      "subdomains": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "max_zoom": 21,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© Google Maps",
+      "cache_name": "map"
+    },
+    "google_terrain": {
+      "id": "google_terrain",
+      "name": "Google Terrain",
+      "category": "Terrain",
+      "url_template": "https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
+      "subdomains": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "max_zoom": 20,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© Google Maps",
+      "cache_name": "land"
+    },
+    "esri_satellite": {
+      "id": "esri_satellite",
+      "name": "ESRI World Imagery",
+      "category": "Satellite",
+      "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "subdomains": [],
+      "max_zoom": 20,
+      "projection": "EPSG:3857",
+      "format": "jpg",
+      "attribution": "© Esri, DigitalGlobe, GeoEye, Earthstar",
+      "cache_name": "ArcGIS.Imagery"
+    },
+    "osm": {
+      "id": "osm",
+      "name": "OpenStreetMap Standard",
+      "category": "Map",
+      "url_template": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "subdomains": [
+        "a",
+        "b",
+        "c"
+      ],
+      "max_zoom": 19,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© OpenStreetMap contributors",
+      "cache_name": "osmmapMapnik"
+    },
+    "opentopomap": {
+      "id": "opentopomap",
+      "name": "OpenTopoMap",
+      "category": "Topographic",
+      "url_template": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "subdomains": [
+        "a",
+        "b",
+        "c"
+      ],
+      "max_zoom": 17,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© OpenTopoMap (CC-BY-SA)",
+      "cache_name": "OpenTopoMap"
+    },
+    "carto_dark": {
+      "id": "carto_dark",
+      "name": "CartoDB Dark Matter",
+      "category": "Map",
+      "url_template": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+      "subdomains": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "max_zoom": 20,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© CartoDB, © OpenStreetMap",
+      "cache_name": "CartoDB.DarkMatter"
+    },
+    "carto_light": {
+      "id": "carto_light",
+      "name": "CartoDB Positron",
+      "category": "Map",
+      "url_template": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+      "subdomains": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "max_zoom": 20,
+      "projection": "EPSG:3857",
+      "format": "png",
+      "attribution": "© CartoDB, © OpenStreetMap",
+      "cache_name": "CartoDB.Positron"
+    },
+    "yandex_sat": {
+      "id": "yandex_sat",
+      "name": "Yandex Satellite",
+      "category": "Satellite",
+      "url_template": "https://core-sat.maps.yandex.net/tiles?l=sat&x={x}&y={y}&z={z}&scale=1&lang=en_US",
+      "subdomains": [],
+      "max_zoom": 20,
+      "projection": "EPSG:3395",
+      "format": "jpg",
+      "attribution": "© Yandex",
+      "cache_name": "yasat"
+    }
+  },
+  "OVERLAYS": {
+    "google_hybrid_overlay": {
+      "id": "google_hybrid_overlay",
+      "name": "Google Labels & Roads",
+      "category": "Overlay",
+      "url_template": "https://mt{s}.google.com/vt/lyrs=h&x={x}&y={y}&z={z}",
+      "subdomains": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "max_zoom": 22,
+      "is_overlay": true,
+      "cache_name": "Both",
+      "format": "png"
+    },
+    "openseamap": {
+      "id": "openseamap",
+      "name": "OpenSeaMap (Marine Beacons & Routes)",
+      "category": "Overlay",
+      "url_template": "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png",
+      "subdomains": [],
+      "max_zoom": 18,
+      "is_overlay": true,
+      "cache_name": "OpenSeaMap",
+      "format": "png"
+    },
+    "grid_degree": {
+      "id": "grid_degree",
+      "name": "Degree Grid (Lat/Lon Lines)",
+      "category": "Grid",
+      "is_grid": true,
+      "is_overlay": true,
+      "max_zoom": 22,
+      "url_template": ""
+    },
+    "grid_tiles": {
+      "id": "grid_tiles",
+      "name": "Tile Grid (Z / X / Y Bounding Coordinates)",
+      "category": "Grid",
+      "is_grid": true,
+      "is_overlay": true,
+      "max_zoom": 22,
+      "url_template": ""
+    },
+    "grid_genshtab": {
+      "id": "grid_genshtab",
+      "name": "Soviet Topo GenShtab Grid (1:100k / 1:50k)",
+      "category": "Grid",
+      "is_grid": true,
+      "is_overlay": true,
+      "max_zoom": 22,
+      "url_template": ""
+    }
+  }
+}

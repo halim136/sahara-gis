@@ -1,0 +1,6 @@
+{
+  "name": "SAS.Planet Web & Python GIS Studio",
+  "description": "تطبيق متكامل مطابق لبرنامج SAS.Planet مع نواة بايثون لمعالجة الخرائط، تحميل البلاطات، الدمج وتصدير الصور، إدارة العلامات، وتتبع GPS.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

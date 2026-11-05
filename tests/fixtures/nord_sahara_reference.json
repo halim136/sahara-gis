@@ -1,0 +1,66 @@
+{
+  "reference": "PROJ / pyproj 3.7.1",
+  "operation": "EPSG:1253",
+  "points": [
+    {
+      "name": "Algiers",
+      "lat": 36.7538,
+      "lon": 3.0588,
+      "zone": 31,
+      "easting": 505331.73418286495,
+      "northing": 4067244.1637698426,
+      "wgs_easting": 505248.61266466737,
+      "wgs_northing": 4067562.7828683276
+    },
+    {
+      "name": "Bejaia",
+      "lat": 36.7525,
+      "lon": 5.0843,
+      "zone": 31,
+      "easting": 686147.6162344008,
+      "northing": 4069123.8863450587,
+      "wgs_easting": 686063.9265183676,
+      "wgs_northing": 4069442.511227055
+    },
+    {
+      "name": "Oran",
+      "lat": 35.6987,
+      "lon": -0.6349,
+      "zone": 30,
+      "easting": 714091.7571754297,
+      "northing": 3952795.4469245705,
+      "wgs_easting": 713988.2710738676,
+      "wgs_northing": 3953108.7553061964
+    },
+    {
+      "name": "Hassi Messaoud",
+      "lat": 31.6804,
+      "lon": 6.0728,
+      "zone": 32,
+      "easting": 222563.31394370896,
+      "northing": 3508411.826637896,
+      "wgs_easting": 222501.02290752198,
+      "wgs_northing": 3508736.1412884747
+    },
+    {
+      "name": "Tindouf",
+      "lat": 27.671,
+      "lon": -8.147,
+      "zone": 29,
+      "easting": 584245.5499608436,
+      "northing": 3060737.7328329426,
+      "wgs_easting": 584124.2358170274,
+      "wgs_northing": 3061049.0457118033
+    },
+    {
+      "name": "Bechar",
+      "lat": 31.6167,
+      "lon": -2.2167,
+      "zone": 30,
+      "easting": 574396.9116686009,
+      "northing": 3497902.1282762326,
+      "wgs_easting": 574294.0566880457,
+      "wgs_northing": 3498217.3015254964
+    }
+  ]
+}
