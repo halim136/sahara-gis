@@ -47,7 +47,7 @@
 .desktop-app-title img {height:15px;width:15px;}
 .desktop-app-title button {font-size:11px;padding:1px 6px;border-radius:2px;}
 .desktop-app-title button:hover {background:var(--hover);}
-.desktop-menu-row {display:flex;position:relative;align-items:center;border-bottom:1px solid var(--line);min-height:29px;gap:12px;padding:0 5px;}
+.desktop-menu-row {display:flex;position:relative;align-items:center;border-bottom:1px solid var(--line);min-height:27px;gap:10px;padding:0 5px;}
 .desktop-menubar {display:flex;align-items:stretch;flex-wrap:wrap;}
 .desktop-menu-holder {position:relative;}
 .desktop-menu-label {padding:4px 7px;font-size:13px;white-space:nowrap;border:1px solid transparent;border-radius:2px;}
@@ -61,7 +61,7 @@
 .desktop-search input {width:100%;min-width:0;outline:none;padding:0 6px;font-size:11px;direction:ltr;}
 .desktop-search button {padding:3px 5px;}
 .desktop-search-error {position:absolute;top:100%;inset-inline-end:8px;z-index:100;background:#fff2d5;color:#6b3800;border:1px solid #e5b467;padding:8px;font-size:12px;box-shadow:1px 3px 7px #0002;}
-.desktop-toolbar {display:flex;align-items:center;gap:2px;padding:3px 5px;min-height:41px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.desktop-toolbar {display:flex;align-items:center;gap:2px;padding:2px 5px;min-height:35px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
 .desktop-tool {display:flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:3px;border:1px solid transparent;border-radius:2px;color:var(--accent);}
 .desktop-tool img {width:25px;height:25px;object-fit:contain;}
 .desktop-tool:hover,.desktop-tool[aria-pressed=true] {background:var(--active);border-color:#8dbfed;}

@@ -46,7 +46,6 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = (p) => {
   const menu=(id:string,label:string,content:React.ReactNode)=><div className="desktop-menu-holder"><button className="desktop-menu-label" aria-haspopup="menu" aria-expanded={open===id} onClick={()=>setOpen(open===id?null:id)}>{label}</button>{open===id&&<div role="menu" className="desktop-menu">{content}</div>}</div>;
   const tool=(label:string,Icon:React.ElementType,fn:()=>void,active=false,disabled=false,asset?:string)=><button className="desktop-tool" title={label} aria-label={label} aria-pressed={active} disabled={disabled} onClick={fn}>{asset?<img src={'/assets/sasplanet/'+asset} alt=""/>:<Icon size={23}/>}</button>;
   return <header ref={root} className="desktop-header">
-    <div className="desktop-app-title"><img src="/assets/branding/sahara-gis.png" alt=""/><span>Sahara GIS <span className="opacity-65">— صحارى GIS</span></span><span className="ms-auto flex items-center gap-3">{p.isOfflineMode&&<span className="flex gap-1 items-center"><WifiOff size={12}/>{t('دون اتصال','Offline')}</span>}<button onClick={p.onToggleLang}>{ar?'English':'العربية'}</button></span></div>
     <div className="desktop-menu-row">
       <nav aria-label={t('القائمة الرئيسية','Main menu')} className="desktop-menubar">
         {menu('operations',t('عمليات','Operations'),<>{item(t('معالجة التحديد / استيراد ملف (KML·GPX·SML·DB3)','Process selection / import file (KML·GPX·SML·DB3)'),Download,p.onOpenSelectionOps,false)}{item(t('استوديو التضاريس و ArcGIS','Terrain & ArcGIS export'),Mountain,p.onOpenTerrainAnalysis)}{item(t('إدارة التخزين','Cache manager'),HardDrive,p.onOpenCacheManager)}</>)}
@@ -63,6 +62,7 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = (p) => {
       </nav>
       <form className="desktop-search" onSubmit={e=>{e.preventDefault();const v=search.trim().split(/[,;\s]+/).map(Number);if(v.length===2&&v.every(Number.isFinite)&&Math.abs(v[0])<=85&&Math.abs(v[1])<=180){(window as any).__SAS_MAP?.setView(v,14);setSearchError('');}else setSearchError(t('أدخل خط العرض ثم الطول: 36.75, 3.05','Enter latitude, longitude: 36.75, 3.05'));}}><input aria-label={t('البحث بالإحداثيات','Search coordinates')} placeholder={t('خط العرض، خط الطول','Latitude, longitude')} value={search} onChange={e=>setSearch(e.target.value)}/><button title={t('انتقال','Go')} aria-label={t('انتقال','Go')}><Search size={15}/></button></form>
       {searchError&&<span role="alert" className="desktop-search-error" onClick={()=>setSearchError('')}>{searchError}</span>}
+      <div className="ms-auto flex items-center gap-2 text-xs shrink-0">{p.isOfflineMode&&<span className="flex gap-1 items-center"><WifiOff size={12}/>{t('دون اتصال','Offline')}</span>}<button className="desktop-menu-label" onClick={p.onToggleLang}>{ar?'English':'العربية'}</button></div>
     </div>
     <div className="desktop-toolbar" role="toolbar" aria-label={t('أدوات الخريطة','Map tools')}>
       {tool(t('تحريك الخريطة','Pan map'),MousePointer2,()=>p.onSetSelectionMode('none'),p.selectionMode==='none')}
