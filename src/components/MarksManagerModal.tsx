@@ -29,6 +29,7 @@ interface MarksManagerModalProps {
   onImportMarks: (marks: MarkItem[]) => void;
   onToggleMark?: (id: string) => void;
   onSetAllHidden?: (hidden: boolean) => void;
+  onStyleMark?: (id: string, patch: Partial<MarkItem>) => void;
   lang: 'ar' | 'en';
 }
 
@@ -41,6 +42,7 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
   onImportMarks,
   onToggleMark,
   onSetAllHidden,
+  onStyleMark,
   lang
 }) => {
   const isAr = lang === 'ar';
@@ -94,7 +96,7 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
     setShowAddForm(false);
   };
 
-  const handleExport = async (format: 'gpx' | 'kml' | 'geojson' | 'dxf' | 'dxf_ns') => {
+  const handleExport = async (format: 'gpx' | 'kml' | 'geojson' | 'dxf' | 'dxf_ns' | 'shapefile') => {
     try {
       const res = await fetch('/api/python/vector/export', {
         method: 'POST',
@@ -103,11 +105,19 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
       });
       const data = await res.json();
       if (data.success) {
-        const blob = new Blob([data.content], { type: 'text/plain;charset=utf-8' });
+        let blob: Blob, ext: string;
+        if (format === 'shapefile') {
+          const bin = Uint8Array.from(atob(String(data.content).trim()), (c) => c.charCodeAt(0));
+          blob = new Blob([bin], { type: 'application/zip' });
+          ext = 'zip';
+        } else {
+          blob = new Blob([data.content], { type: 'text/plain;charset=utf-8' });
+          ext = format.startsWith('dxf') ? 'dxf' : format;
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `marks_export_${Date.now()}.${format.startsWith('dxf') ? 'dxf' : format}`;
+        a.download = `marks_export_${Date.now()}.${ext}`;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -292,6 +302,7 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
             <button onClick={() => handleExport('geojson')} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px]">GeoJSON</button>
             <button onClick={() => handleExport('dxf')} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px]" title={isAr ? 'DXF بإحداثيات WGS84' : 'DXF in WGS84 lon/lat'}>DXF</button>
             <button onClick={() => handleExport('dxf_ns')} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 font-mono text-[11px]" title={isAr ? 'DXF مُسقط إلى Nord Sahara UTM (متر) للأوتوكاد' : 'DXF projected to Nord Sahara UTM (metres) for AutoCAD'}>DXF·NS</button>
+            <button onClick={() => handleExport('shapefile')} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 font-mono text-[11px]" title={isAr ? 'تصدير Shapefile داخل ملف ZIP (نقاط/خطوط/مساحات)' : 'Shapefile export in a ZIP (points/lines/polygons)'}>SHP</button>
           </div>
         </div>
 
@@ -486,10 +497,11 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
             filteredMarks.map((mark) => (
               <div key={mark.id} className={`py-2.5 flex items-center justify-between gap-3 text-xs ${mark.hidden ? 'opacity-45' : ''}`}>
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs"
-                    style={{ backgroundColor: mark.color || '#ef4444' }}
-                  />
+                  {onStyleMark ? (
+                    <input type="color" value={/^#[0-9a-f]{6}$/i.test(mark.color || '') ? mark.color : '#ef4444'} onChange={(e) => onStyleMark(mark.id, { color: e.target.value })} className="w-4 h-4 rounded-full border-0 bg-transparent cursor-pointer shrink-0 p-0" title={isAr ? 'لون العنصر' : 'Feature color'} />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: mark.color || '#ef4444' }} />
+                  )}
                   <div>
                     <div className="font-semibold text-slate-200">{mark.name}</div>
                     {mark.description && <div className="text-[11px] text-slate-400">{mark.description}</div>}
@@ -505,6 +517,9 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
                   <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
                     {mark.category || 'General'}
                   </span>
+                  {onStyleMark && mark.type !== 'point' && (
+                    <input type="number" min={1} max={12} step={0.5} value={mark.weight || (mark.type === 'polygon' ? 2.5 : 3.5)} onChange={(e) => onStyleMark(mark.id, { weight: Number(e.target.value) })} className="w-12 bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-[11px] text-slate-200" title={isAr ? 'سماكة الخط' : 'Line width'} />
+                  )}
                   {onToggleMark && (
                     <button
                       onClick={() => onToggleMark(mark.id)}

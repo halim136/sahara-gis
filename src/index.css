@@ -69,6 +69,9 @@
 .desktop-tool:nth-of-type(4n+2) {color:#229784;}
 .desktop-tool:nth-of-type(4n+3) {color:#b27b24;}
 .desktop-separator {height:27px;border-inline-start:1px solid var(--line);margin:0 4px;}
+/* Permanent feature labels on the map. */
+.sas-feature-label{background:rgba(15,23,42,.82)!important;border:1px solid rgba(148,163,184,.5)!important;color:#f1f5f9!important;font:600 11px Cairo,sans-serif!important;padding:1px 5px!important;border-radius:3px!important;box-shadow:0 1px 3px #0005!important;white-space:nowrap!important;}
+.sas-feature-label::before{display:none!important;}
 /* Crosshair cursor while drawing / digitizing on the map. */
 .leaflet-container.sas-draw-cursor,.sas-draw-cursor .leaflet-grab,.sas-draw-cursor .leaflet-interactive,.sas-draw-cursor .leaflet-tile{cursor:crosshair!important;}
 /* Native <option> popups default to white-on-white on Windows; force a readable dark popup everywhere. */

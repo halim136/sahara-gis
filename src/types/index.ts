@@ -51,6 +51,7 @@ export interface MarkItem {
   trackSegments?: {lon:number;lat:number;ele?:number;time?:string;hdop?:number}[][];
   properties?: Record<string, any>;
   hidden?: boolean;
+  weight?: number;
 }
 
 export interface MeasurementData {

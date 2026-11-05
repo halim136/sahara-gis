@@ -17,6 +17,8 @@ interface HeaderNavbarProps {
   onOpenMarksManager: () => void;
   onDigitizeLine?: () => void;
   onDigitizePolygon?: () => void;
+  showLabels?: boolean;
+  onToggleLabels?: () => void;
   onOpenTopographyStudio: () => void;
   onOpenSpatialAnalysis: () => void;
   onOpenGpsSimulator: () => void;
@@ -51,7 +53,7 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = (p) => {
     <div className="desktop-menu-row">
       <nav aria-label={t('القائمة الرئيسية','Main menu')} className="desktop-menubar">
         {menu('operations',t('عمليات','Operations'),<>{item(t('معالجة التحديد / استيراد ملف (KML·GPX·SML·DB3)','Process selection / import file (KML·GPX·SML·DB3)'),Download,p.onOpenSelectionOps,false)}{item(t('استوديو التضاريس و ArcGIS','Terrain & ArcGIS export'),Mountain,p.onOpenTerrainAnalysis)}{item(t('إدارة التخزين','Cache manager'),HardDrive,p.onOpenCacheManager)}</>)}
-        {menu('view',t('عرض','View'),<>{item(t('تكبير','Zoom in'),Plus,p.onZoomIn)}{item(t('تصغير','Zoom out'),Minus,p.onZoomOut)}{item(t('إعدادات العرض','Display settings'),Settings,p.onOpenSettings)}</>)}
+        {menu('view',t('عرض','View'),<>{item(t('تسمية العناصر على الخريطة','Label features on map'),MapPin,()=>p.onToggleLabels?.(),false,p.showLabels)}{item(t('تكبير','Zoom in'),Plus,p.onZoomIn)}{item(t('تصغير','Zoom out'),Minus,p.onZoomOut)}{item(t('إعدادات العرض','Display settings'),Settings,p.onOpenSettings)}</>)}
         {menu('source',t('المصدر','Source'),<>{item(t('إدارة التخزين وعدم الاتصال','Cache & offline mode'),HardDrive,p.onOpenCacheManager)}{item(t('إعدادات مصدر البيانات','Data source settings'),Settings,p.onOpenSettings)}</>)}
         {menu('maps',t('خرائط','Maps'),p.sources.map(s=>item(s.name,Globe,()=>p.onSelectSource(s),false,p.currentSource.id===s.id)))}
         {menu('layers',t('طبقات','Layers'),p.overlays.map(s=>item(s.name,s.is_grid?Grid3X3:Layers,()=>p.onToggleOverlay(s.id),false,p.activeOverlays.has(s.id))))}

@@ -33,6 +33,7 @@ interface MapCanvasProps {
   onSetMeasurementPoints: (pts: [number, number][]) => void;
   onFinishDrawing: (mode:SelectionMode,points:[number,number][])=>void;
   onSelectMark?: (mark: MarkItem) => void;
+  showLabels?: boolean;
   sources?: MapSource[];
   compareSource?: MapSource | null;
   onCompareSource?: (s: MapSource | null) => void;
@@ -59,6 +60,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   onSetMeasurementPoints,
   onFinishDrawing,
   onSelectMark,
+  showLabels = false,
   sources = [],
   compareSource = null,
   onCompareSource
@@ -586,6 +588,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         });
 
         const m = L.marker([lat, lon], { icon, interactive:selectionMode==='none' }).addTo(group);
+        if (showLabels && mark.name) m.bindTooltip(markName, { permanent: true, direction: 'top', className: 'sas-feature-label', offset: [0, -8] });
         m.bindPopup(`
           <div style="font-family:Cairo,sans-serif;font-size:12px;color:#0f172a;">
             <strong style="color:${color};font-size:13px;">${markName}</strong>
@@ -599,16 +602,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       } else if (mark.type === 'linestring' && Array.isArray(mark.coords)) {
         const pts = mark.coords.map((c: [number, number]) => [c[1], c[0]] as [number, number]);
         const segmented=mark.trackSegments?.flat();const coherent=segmented?.length===mark.coords.length&&segmented.every((p,i)=>p.lon===mark.coords[i][0]&&p.lat===mark.coords[i][1]);
-        const poly = L.polyline(coherent?mark.trackSegments!.map(seg=>seg.map(p=>[p.lat,p.lon] as [number,number])):pts, { color, weight: 3.5, opacity: 0.85, interactive:selectionMode==='none' }).addTo(group);
+        const poly = L.polyline(coherent?mark.trackSegments!.map(seg=>seg.map(p=>[p.lat,p.lon] as [number,number])):pts, { color, weight: mark.weight || 3.5, opacity: 0.85, interactive:selectionMode==='none' }).addTo(group);
         poly.bindPopup(`<strong>${markName}</strong><br/>${description}`);
+        if (showLabels && mark.name) poly.bindTooltip(markName, { permanent: true, direction: 'center', className: 'sas-feature-label' });
       } else if (mark.type === 'polygon' && Array.isArray(mark.coords)) {
         const outer = Array.isArray(mark.coords[0][0]) ? mark.coords[0] : mark.coords;
         const pts = outer.map((c: [number, number]) => [c[1], c[0]] as [number, number]);
-        const poly = L.polygon(pts, { color, weight: 2.5, fillColor: color, fillOpacity: 0.25, interactive:selectionMode==='none' }).addTo(group);
+        const poly = L.polygon(pts, { color, weight: mark.weight || 2.5, fillColor: color, fillOpacity: 0.25, interactive:selectionMode==='none' }).addTo(group);
         poly.bindPopup(`<strong>${markName}</strong><br/>${description}`);
+        if (showLabels && mark.name) poly.bindTooltip(markName, { permanent: true, direction: 'center', className: 'sas-feature-label' });
       }
     });
-  }, [marks,selectionMode]);
+  }, [marks,selectionMode,showLabels]);
 
   // 6. Render GPS Simulation
   useEffect(() => {

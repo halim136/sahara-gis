@@ -586,9 +586,131 @@ def parse_vector_file(path: str | Path) -> Dict[str, Any]:
     raise ValueError("Supported vector files: KML, KMZ, GPX, GeoJSON, ZIP Shapefile, SAS.Planet .sml and .db3.")
 
 
+def _shp_ring_area(r):
+    return sum(r[i][0] * r[i + 1][1] - r[i + 1][0] * r[i][1] for i in range(len(r) - 1)) / 2.0
+
+
+def _shp_split(marks):
+    pts, lines, polys = [], [], []
+    for m in marks:
+        t = (m.get("type") or "point").lower()
+        c = m.get("coords") or []
+        name, cat = str(m.get("name") or ""), str(m.get("category") or "")
+        if t == "point" and len(c) >= 2:
+            pts.append((float(c[0]), float(c[1]), name, cat))
+        elif t in ("line", "linestring") and len(c) >= 2:
+            lines.append(([(float(p[0]), float(p[1])) for p in c], name, cat))
+        elif t == "polygon":
+            ring = c if (c and isinstance(c[0][0], (int, float))) else (c[0] if c else [])
+            if len(ring) >= 3:
+                r = [(float(p[0]), float(p[1])) for p in ring]
+                if r[0] != r[-1]:
+                    r = r + [r[0]]
+                if _shp_ring_area(r) > 0:   # shapefile outer ring must be clockwise
+                    r = r[::-1]
+                polys.append((r, name, cat))
+    return pts, lines, polys
+
+
+def _shp_header(shape_type, xmin, ymin, xmax, ymax, total_bytes):
+    import struct
+    h = bytearray(100)
+    struct.pack_into(">i", h, 0, 9994)
+    struct.pack_into(">i", h, 24, total_bytes // 2)
+    struct.pack_into("<i", h, 28, 1000)
+    struct.pack_into("<i", h, 32, shape_type)
+    struct.pack_into("<4d", h, 36, xmin, ymin, xmax, ymax)
+    return bytes(h)
+
+
+def _shp_write(shape_type, geoms):
+    """geoms: points -> [(x,y,name,cat)]; lines/polys -> [(points,name,cat)]."""
+    import io, struct
+    body, shx = io.BytesIO(), io.BytesIO()
+    if shape_type == 1:
+        xs = [g[0] for g in geoms]; ys = [g[1] for g in geoms]
+    else:
+        xs = [p[0] for g in geoms for p in g[0]]; ys = [p[1] for g in geoms for p in g[0]]
+    xmin, ymin, xmax, ymax = (min(xs), min(ys), max(xs), max(ys)) if xs else (0, 0, 0, 0)
+    rows = []
+    for i, g in enumerate(geoms, 1):
+        if shape_type == 1:
+            content = struct.pack("<i", 1) + struct.pack("<2d", g[0], g[1])
+            rows.append((g[2], g[3]))
+        else:
+            pts = g[0]; bx = [p[0] for p in pts]; by = [p[1] for p in pts]
+            content = struct.pack("<i", shape_type) + struct.pack("<4d", min(bx), min(by), max(bx), max(by))
+            content += struct.pack("<ii", 1, len(pts)) + struct.pack("<i", 0)
+            for x, y in pts:
+                content += struct.pack("<2d", x, y)
+            rows.append((g[1], g[2]))
+        clen = len(content) // 2
+        offset_words = (100 + len(body.getvalue())) // 2
+        body.write(struct.pack(">ii", i, clen)); body.write(content)
+        shx.write(struct.pack(">ii", offset_words, clen))
+    shp = _shp_header(shape_type, xmin, ymin, xmax, ymax, 100 + len(body.getvalue())) + body.getvalue()
+    shxb = _shp_header(shape_type, xmin, ymin, xmax, ymax, 100 + len(shx.getvalue())) + shx.getvalue()
+    return shp, shxb, rows
+
+
+def _dbf(rows):
+    import io, struct, datetime
+    fields = [("name", 64), ("category", 32)]
+    rec_size = 1 + sum(f[1] for f in fields)
+    header_size = 32 + 32 * len(fields) + 1
+    today = datetime.date.today()
+    h = bytearray(32)
+    h[0] = 0x03; h[1] = today.year - 1900; h[2] = today.month; h[3] = today.day
+    struct.pack_into("<i", h, 4, len(rows))
+    struct.pack_into("<h", h, 8, header_size)
+    struct.pack_into("<h", h, 10, rec_size)
+    out = io.BytesIO(); out.write(h)
+    for name, length in fields:
+        fd = bytearray(32)
+        nm = name.encode("ascii")[:11]; fd[0:len(nm)] = nm
+        fd[11] = ord("C"); fd[16] = length; fd[17] = 0
+        out.write(fd)
+    out.write(b"\x0d")
+    for name, cat in rows:
+        out.write(b" ")
+        for val, length in ((name, 64), (cat, 32)):
+            b = str(val).encode("utf-8")[:length]
+            out.write(b + b" " * (length - len(b)))
+    out.write(b"\x1a")
+    return out.getvalue()
+
+
+def _write_shapefile(marks):
+    import io
+    pts, lines, polys = _shp_split(marks)
+    if not (pts or lines or polys):
+        raise ValueError("No point, line or polygon features to export.")
+    prj = ('GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],'
+           'PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]]')
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        def add(base, data):
+            shp, shx, rows = data
+            z.writestr(base + ".shp", shp)
+            z.writestr(base + ".shx", shx)
+            z.writestr(base + ".dbf", _dbf(rows))
+            z.writestr(base + ".prj", prj)
+            z.writestr(base + ".cpg", "UTF-8")
+        if pts:
+            add("points", _shp_write(1, pts))
+        if lines:
+            add("lines", _shp_write(3, lines))
+        if polys:
+            add("polygons", _shp_write(5, polys))
+    return buf.getvalue()
+
+
 def export_vector_data(marks: List[Dict[str, Any]], format_type: str = "geojson") -> str:
-    """Export simple application marks to GeoJSON, GPX or KML."""
+    """Export simple application marks to GeoJSON, GPX, KML, DXF or Shapefile (zip, base64)."""
     fmt = format_type.lower()
+    if fmt in ("shapefile", "shp", "shp_zip"):
+        import base64
+        return base64.b64encode(_write_shapefile(marks)).decode("ascii")
     if fmt == "geojson":
         features = []
         for mark in marks:

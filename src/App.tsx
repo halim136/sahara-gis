@@ -167,6 +167,7 @@ export default function App() {
   const [measurementPoints, setMeasurementPoints] = useState<[number, number][]>([]);
   const [digitize, setDigitize] = useState<null | 'linestring' | 'polygon'>(null);
   const [digitizeName, setDigitizeName] = useState<string>('');
+  const [showLabels, setShowLabels] = useState<boolean>(false);
 
   // Marks
   const markHistory = useHistoryState<MarkItem[]>(()=>{try{return JSON.parse(localStorage.getItem('sas:marks:v1')||'null')||INITIAL_MARKS;}catch{return INITIAL_MARKS;}});
@@ -320,6 +321,8 @@ export default function App() {
         onOpenMarksManager={() => setIsMarksManagerOpen(true)}
         onDigitizeLine={()=>{setDigitize('linestring');setDigitizeName('');setSelectedPolygon(null);setMeasurementPoints([]);setSelectionMode('polyline');}}
         onDigitizePolygon={()=>{setDigitize('polygon');setDigitizeName('');setSelectedPolygon(null);setMeasurementPoints([]);setSelectionMode('polygon');}}
+        showLabels={showLabels}
+        onToggleLabels={()=>setShowLabels(v=>!v)}
         onOpenTopographyStudio={openTopography}
         onOpenSpatialAnalysis={() => setIsSpatialAnalysisOpen(true)}
         onOpenGpsSimulator={() => setIsGpsSimulatorOpen(true)}
@@ -369,6 +372,7 @@ export default function App() {
           selectedPolygon={selectedPolygon}
           measurementPoints={measurementPoints}
           marks={field.marksVisible===false?[]:marks}
+          showLabels={showLabels}
           gpsPosition={gpsPosition}
           gpsTrack={gpsTrack}
           contourGeoJson={activeContourGeoJson}
@@ -498,6 +502,7 @@ export default function App() {
           onImportMarks={(newMarks) => setMarks((prev) => [...prev, ...newMarks])}
           onToggleMark={(id) => setMarks((prev) => prev.map((m) => m.id === id ? { ...m, hidden: !m.hidden } : m))}
           onSetAllHidden={(hidden) => setMarks((prev) => prev.map((m) => ({ ...m, hidden })))}
+          onStyleMark={(id, patch) => setMarks((prev) => prev.map((m) => m.id === id ? { ...m, ...patch } : m))}
           lang={lang}
         />
       )}
