@@ -254,6 +254,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   useEffect(()=>{
     (window as any).__SAS_SELECTION_MODE=selectionMode;
     const map=mapInstanceRef.current;
+    map?.getContainer().classList.toggle('sas-draw-cursor',selectionMode!=='none');
     if(selectionMode!=='none')map?.closePopup();
     if(['polyline','polygon'].includes(selectionMode))map?.doubleClickZoom.disable();else map?.doubleClickZoom.enable();
     polyPointsRef.current=[];rectStartPointRef.current=null;isDrawingRectRef.current=false;

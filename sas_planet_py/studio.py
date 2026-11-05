@@ -180,6 +180,15 @@ def dispatch(operation,p):
     if operation=='veg_index':
         from .studio_analysis import vegetation_index
         return vegetation_index(p)
+    if operation=='cogo':
+        from .cogo import cogo
+        return cogo(p)
+    if operation=='geom_ops':
+        from .geometry_ops import geom_ops
+        return geom_ops(p)
+    if operation=='terrain_path':
+        from .terrain_path import terrain_path
+        return terrain_path(p)
     if operation=='georeference':
         from .georeference import georeference
         return georeference(uploaded(p['id'],'scan'),p['gcps'],p.get('crs','EPSG:4326'))
