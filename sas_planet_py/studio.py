@@ -189,6 +189,9 @@ def dispatch(operation,p):
     if operation=='terrain_path':
         from .terrain_path import terrain_path
         return terrain_path(p)
+    if operation=='digitize_raster':
+        from .map_digitize import digitize
+        return digitize({**p,'path':uploaded(p['id'],p.get('kind','raster'))})
     if operation=='georeference':
         from .georeference import georeference
         return georeference(uploaded(p['id'],'scan'),p['gcps'],p.get('crs','EPSG:4326'))
