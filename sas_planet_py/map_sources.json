@@ -173,19 +173,6 @@
       "attribution": "© CyclOSM, OpenStreetMap contributors",
       "cache_name": "CyclOSM"
     },
-    "soviet_topo": {
-      "id": "soviet_topo",
-      "name": "طبوغرافية سوفيتية Topo (تجريبي)",
-      "category": "Terrain",
-      "url_template": "http://144.76.234.108/cgi-bin/tapp/tilecache.py/1.0.0/topomapper_v2/{z}/{x}/{y}",
-      "subdomains": [],
-      "max_zoom": 13,
-      "projection": "EPSG:3857",
-      "format": "jpg",
-      "attribution": "Topomapper · Soviet General Staff topo",
-      "cache_name": "Topomapper",
-      "tms": true
-    },
     "osm": {
       "id": "osm",
       "name": "OpenStreetMap Standard",
