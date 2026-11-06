@@ -8,7 +8,7 @@ export function tileRanges(bbox:number[],zooms:number[],source:string):Range[]{
  if(!Array.isArray(zooms)||zooms.length<1||zooms.length>24||zooms.some(z=>!Number.isInteger(z)||z<0||z>sources[source].max_zoom))throw Error('Invalid zoom levels.');
  const coord=(lon:number,lat:number,z:number)=>{const n=2**z;return [Math.max(0,Math.min(n-1,Math.floor((lon+180)/360*n))),Math.max(0,Math.min(n-1,Math.floor((1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*n)))];};
  const ranges=[...new Set(zooms)].sort((a,b)=>a-b).map(z=>{const [x0,y1]=coord(bbox[0],bbox[1],z),[x1,y0]=coord(bbox[2],bbox[3],z);return {z,x0,x1,y0,y1,count:(x1-x0+1)*(y1-y0+1)};});
- if(ranges.reduce((n,r)=>n+r.count,0)>100000)throw Error('Select at most 100,000 tiles per job.');return ranges;
+ if(ranges.reduce((n,r)=>n+r.count,0)>250000)throw Error('Select at most 250,000 tiles per job.');return ranges;
 }
 function specAt(job:Job,index:number):TileSpec{for(const r of job.ranges){if(index<r.count)return {source:job.source_id,z:r.z,x:r.x0+index%(r.x1-r.x0+1),y:r.y0+Math.floor(index/(r.x1-r.x0+1))};index-=r.count;}throw Error('Invalid job cursor');}
 interface Job{storage_type:string;speed_kb_s:number;elapsed_s:number;bytes_downloaded:number;job_id:string;source_id:string;bbox:number[];zooms:number[];ranges:Range[];status:string;cursor:number;total_tiles:number;downloaded:number;cached:number;failed:number;progress_percent:number;error?:string;created:string;retry:number[];repair?:boolean;}
