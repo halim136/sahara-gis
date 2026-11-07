@@ -126,14 +126,14 @@ class TileStitcher:
                 tx, ty = coord
                 sub = random.choice(subdomains) if subdomains else ""
                 url = url_template.format(z=zoom, x=tx, y=ty, s=sub)
-                req = urllib.request.Request(
-                    url,
-                    headers={
-                        "User-Agent": DEFAULT_USER_AGENT,
-                        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                        "Referer": "https://www.google.com/"
-                    }
-                )
+                osm_like = any(h in url for h in ("openstreetmap", "opentopomap", "cyclosm", "tile.osm"))
+                headers = {
+                    "User-Agent": "SaharaGIS/1.5 (+https://github.com/halim136/sahara-gis)" if osm_like else DEFAULT_USER_AGENT,
+                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                }
+                if not osm_like:
+                    headers["Referer"] = "https://www.google.com/"
+                req = urllib.request.Request(url, headers=headers)
                 try:
                     with urllib.request.urlopen(req, timeout=12) as resp:
                         content = resp.read()
@@ -153,7 +153,7 @@ class TileStitcher:
                         tiles_data[(tx, ty)] = data
 
         # 3. Create composite Pillow image
-        composite = Image.new("RGB", (width_px, height_px), (24, 28, 38))
+        composite = Image.new("RGB", (width_px, height_px), (255, 255, 255))
 
         # 4. Paste each real tile at its pixel location (top-to-bottom)
         for x in range(start_x, end_x + 1):

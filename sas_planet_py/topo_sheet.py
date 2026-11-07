@@ -103,7 +103,7 @@ def topo_sheet(p):
         except OSError:
             pass
 
-    px_w = 1800
+    px_w = {'A4': 2000, 'A3': 2600, 'A2': 3400, 'A1': 4400, 'A0': 5600}.get(page, 2600)
     px_h = max(1, round(px_w * mh / mw))
     reference = (from_bounds(*bounds, px_w, px_h), px_w, px_h)
     warped, _ = warped_bytes(raw, work, reference)
@@ -275,4 +275,5 @@ def topo_sheet(p):
             'statistics': {'scale': scale, 'page': page, 'crs': label, 'zoom': zoom,
                            'grid_step_m': step, 'map_bounds': bounds, 'geographic_bbox': gb,
                            'source': source, 'image_px': [px_w, px_h],
-                           'tiles': stitch.get('total_tiles')}}
+                           'tiles': stitch.get('total_tiles'),
+                           'missing_tiles': max(0, (stitch.get('total_tiles') or 0) - (stitch.get('downloaded_or_cached') or 0))}}
