@@ -1,6 +1,12 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Minus, Square, Copy } from 'lucide-react';
 import { addMinimized, removeMinimized } from './windowManager';
+import { storeAppValue } from '../utils/portableState';
+
+const WIN_KEY = 'sas:windows:v1';
+function readWins(): Record<string, any> {
+  try { return JSON.parse(localStorage.getItem(WIN_KEY) || '{}') || {}; } catch { return {}; }
+}
 
 interface DraggableWindowProps {
   children: React.ReactElement<any>;
@@ -31,17 +37,31 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({ children, lang
   const titleRef = useRef('');
   const mode = useRef<{ kind: 'drag' | 'resize'; dir?: string; sx: number; sy: number; g: Geom } | null>(null);
 
-  // Measure the naturally-sized, centered window once, then pin it in pixels.
+  const onScreen = (g: Geom) => g && g.width >= 240 && g.height >= 120 &&
+    g.left < window.innerWidth - 60 && g.left + g.width > 60 && g.top >= 0 && g.top < window.innerHeight - 40;
+
+  // Measure the naturally-sized window once; restore a saved size/position if any.
   useLayoutEffect(() => {
     const el = winRef.current;
     if (!el || geom) return;
     const r = el.getBoundingClientRect();
     const header = childRef.current?.firstElementChild as HTMLElement | null;
     titleRef.current = (header?.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40) || (ar ? 'نافذة' : 'Window');
+    const saved = readWins()[titleRef.current] as Geom | undefined;
+    if (saved && onScreen(saved)) { setGeom(saved); return; }
     const width = Math.min(r.width, window.innerWidth - 16);
     const height = Math.min(r.height, window.innerHeight * 0.86);
     setGeom({ left: Math.max(8, (window.innerWidth - width) / 2), top: Math.max(8, r.top), width, height });
   }, []);
+
+  // Persist the normal (non-maximized) size/position per window title (disk-synced in the portable app).
+  useEffect(() => {
+    if (!geom || !titleRef.current) return;
+    const g = maximized && prevGeom.current ? prevGeom.current : geom;
+    const all = readWins();
+    all[titleRef.current] = g;
+    try { storeAppValue(WIN_KEY, JSON.stringify(all)); } catch {}
+  }, [geom, maximized]);
 
   useEffect(() => () => removeMinimized(id), [id]);
 

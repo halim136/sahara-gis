@@ -151,7 +151,10 @@ export default function App() {
   const [customSources, setCustomSources] = useState<MapSource[]>(() => loadCustomSources());
   const allSources = useMemo(() => [...DEFAULT_SOURCES, ...customSources], [customSources]);
   const updateCustomSources = useCallback((list: MapSource[]) => { setCustomSources(list); saveCustomSources(list); }, []);
-  const [currentSource, setCurrentSource] = useState<MapSource>(() => DEFAULT_SOURCES.find(s=>s.id===loadSettings().defaultSource) || DEFAULT_SOURCES[0]);
+  const [currentSource, setCurrentSource] = useState<MapSource>(() => {
+    let saved=''; try{saved=localStorage.getItem('sas:last-source:v1')||'';}catch{}
+    return DEFAULT_SOURCES.find(s=>s.id===saved) || DEFAULT_SOURCES.find(s=>s.id===loadSettings().defaultSource) || DEFAULT_SOURCES[0];
+  });
   const [compareSource, setCompareSource] = useState<MapSource | null>(null);
   const [activeOverlays, setActiveOverlays] = useState<Set<string>>(new Set(['google_hybrid_overlay']));
 
@@ -173,6 +176,7 @@ export default function App() {
   const markHistory = useHistoryState<MarkItem[]>(()=>{try{return JSON.parse(localStorage.getItem('sas:marks:v1')||'null')||INITIAL_MARKS;}catch{return INITIAL_MARKS;}});
   const marks=markHistory.value,setMarks=markHistory.set;
   useEffect(()=>{try{storeAppValue('sas:marks:v1',JSON.stringify(marks));}catch{}},[marks]);
+  useEffect(()=>{try{storeAppValue('sas:last-source:v1',currentSource.id);}catch{}},[currentSource.id]);
 
   // GPS Simulation
   const [gpsPosition, setGpsPosition] = useState<{ lat: number; lon: number; bearing: number } | null>(null);

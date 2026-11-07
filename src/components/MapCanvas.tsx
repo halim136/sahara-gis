@@ -271,6 +271,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     options: L.TileLayerOptions & { isOfflineMode: boolean; isOverlay?: boolean }
   ) => {
     const DiskTileLayer = L.TileLayer.extend({
+      // The upstream tile is fetched via the server proxy, so the Leaflet URL is
+      // only a cache hint. Templates can carry {q} (Bing quadkey) which Leaflet's
+      // own template() rejects — guard it so selecting such a source never throws.
+      getTileUrl: function(this:L.TileLayer,coords:L.Coords):string {
+        try { return (L.TileLayer.prototype as any).getTileUrl.call(this,coords); } catch { return ''; }
+      },
       createTile: function(this:L.TileLayer,coords:L.Coords,done:(error:any,tile:HTMLElement)=>void):HTMLElement {
         const container=document.createElement('img'),controller=new AbortController();
         container.className=options.isOverlay?'sas-map-overlay-tile':'sas-map-base-tile';

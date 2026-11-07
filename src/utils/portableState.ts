@@ -1,5 +1,5 @@
 // Portable preferences live alongside the executable, independent of localhost port.
-const KEYS=['sas:settings:v1','sas:saved-views:v1','sas:last-view:v1','sas_offline_mode','sas:marks:v1','sas:analyses:v1','sas:camera3d:v1','sas:field:v1'];
+const KEYS=['sas:settings:v1','sas:saved-views:v1','sas:last-view:v1','sas_offline_mode','sas:marks:v1','sas:analyses:v1','sas:camera3d:v1','sas:field:v1','sas:windows:v1','sas:last-source:v1'];
 let portable=false;let timer:ReturnType<typeof setTimeout>|undefined;
 const snapshot=()=>Object.fromEntries(KEYS.flatMap(key=>{const value=localStorage.getItem(key);return value===null?[]:[[key,value]];}));
 function flush(){if(!portable)return;try{void fetch('/api/portable/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot()),keepalive:true}).catch(()=>{});}catch{}}

@@ -57,7 +57,7 @@ const developmentPython=path.join(__dirname,'build','gis-python','python.exe');
 const PYTHON_CMD = process.env.SAS_PYTHON || (fs.existsSync(bundledPython) ? bundledPython : fs.existsSync(developmentPython)?developmentPython:(process.platform === 'win32' ? 'python' : 'python3'));
 
 app.get('/api/health', (_req, res) => res.json({success:true, app:'sasplanet-gis', displayName:'Sahara GIS', desktopSupport:true, portable:IS_PORTABLE, instance:process.env.SAS_INSTANCE_ID || '', node:process.version}));
-const portableKeys = ['sas:settings:v1','sas:saved-views:v1','sas:last-view:v1','sas_offline_mode','sas:marks:v1','sas:analyses:v1','sas:camera3d:v1','sas:field:v1'];
+const portableKeys = ['sas:settings:v1','sas:saved-views:v1','sas:last-view:v1','sas_offline_mode','sas:marks:v1','sas:analyses:v1','sas:camera3d:v1','sas:field:v1','sas:windows:v1','sas:last-source:v1'];
 app.get('/api/portable/state', (_req, res) => {
   let state:Record<string,string> = {};
   if (IS_PORTABLE && fs.existsSync(PORTABLE_STATE)) {
