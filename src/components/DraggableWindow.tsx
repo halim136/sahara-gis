@@ -128,7 +128,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({ children, lang
   };
 
   const winStyle: React.CSSProperties = geom
-    ? { position: 'fixed', left: geom.left, top: geom.top, width: geom.width, height: geom.height, zIndex: z, display: minimized ? 'none' : 'flex', flexDirection: 'column', pointerEvents: 'auto' }
+    ? { position: 'fixed', left: geom.left, top: geom.top, width: geom.width, height: geom.height, zIndex: z, display: minimized ? 'none' : 'flex', flexDirection: 'column', pointerEvents: 'auto', overflow: 'hidden' }
     : { position: 'fixed', left: '50%', top: '7vh', transform: 'translateX(-50%)', maxHeight: '86vh', zIndex: z, display: 'flex', flexDirection: 'column', visibility: 'hidden', pointerEvents: 'auto' };
 
   const prevStyle = (children.props.style || {}) as React.CSSProperties;
@@ -181,14 +181,14 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({ children, lang
       {/* Resize handles (hidden while maximized) */}
       {!maximized && geom && (
         <>
-          {handle('n', { top: -3, left: E, right: E, height: E, cursor: 'ns-resize' })}
-          {handle('s', { bottom: -3, left: E, right: E, height: E, cursor: 'ns-resize' })}
-          {handle('e', { top: E, bottom: E, right: -3, width: E, cursor: 'ew-resize' })}
-          {handle('w', { top: E, bottom: E, left: -3, width: E, cursor: 'ew-resize' })}
-          {handle('ne', { top: -3, right: -3, width: 14, height: 14, cursor: 'nesw-resize' })}
-          {handle('nw', { top: -3, left: -3, width: 14, height: 14, cursor: 'nwse-resize' })}
-          {handle('se', { bottom: -3, right: -3, width: 14, height: 14, cursor: 'nwse-resize' })}
-          {handle('sw', { bottom: -3, left: -3, width: 14, height: 14, cursor: 'nesw-resize' })}
+          {handle('n', { top: 0, left: E, right: E, height: E, cursor: 'ns-resize' })}
+          {handle('s', { bottom: 0, left: E, right: E, height: E, cursor: 'ns-resize' })}
+          {handle('e', { top: E, bottom: E, right: 0, width: E, cursor: 'ew-resize' })}
+          {handle('w', { top: E, bottom: E, left: 0, width: E, cursor: 'ew-resize' })}
+          {handle('ne', { top: 0, right: 0, width: 14, height: 14, cursor: 'nesw-resize' })}
+          {handle('nw', { top: 0, left: 0, width: 14, height: 14, cursor: 'nwse-resize' })}
+          {handle('se', { bottom: 0, right: 0, width: 14, height: 14, cursor: 'nwse-resize' })}
+          {handle('sw', { bottom: 0, left: 0, width: 14, height: 14, cursor: 'nesw-resize' })}
         </>
       )}
     </div>

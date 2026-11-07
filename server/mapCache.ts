@@ -7,6 +7,13 @@ type Source = {id:string;cache_name?:string;url_template?:string;subdomains?:str
 export const sources: Record<string,Source> = {...definitions.MAP_SOURCES,...definitions.OVERLAYS};
 // Bing-style quadkey for templates using {q} (e.g. virtualearth tiles).
 function quadKey(z:number,x:number,y:number):string{let q='';for(let i=z;i>0;i--){let d=0;const m=1<<(i-1);if((x&m)!==0)d+=1;if((y&m)!==0)d+=2;q+=d;}return q;}
+// OSM-policy servers (OSM, OpenTopoMap, CyclOSM, …) block generic clients and
+// fake referers; send only a descriptive User-Agent to them.
+function tileHeaders(url:string):Record<string,string>{
+  const ua='SaharaGIS/1.5 (+https://github.com/halim136/sahara-gis)';
+  if(/openstreetmap|opentopomap|cyclosm|cartocdn|sputnik|refuges|tile\.osm/i.test(url))return {'User-Agent':ua};
+  return {'User-Agent':ua,'Referer':'https://www.google.com/'};
+}
 const extensions=['jpg','png','jpeg','webp','gif'];
 export class TileError extends Error {constructor(public status:number,message:string){super(message);}}
 export function tileSpec(query:Record<string,unknown>){
@@ -78,7 +85,7 @@ export class MapDiskCache {
   async refresh(spec:TileSpec,verify?:(bytes:Buffer)=>Promise<void>){
     const source=sources[spec.source],sub=source.subdomains?.[Math.abs(spec.x+spec.y)%source.subdomains.length]||'';
     const url=source.url_template!.replaceAll('{s}',sub).replaceAll('{z}',String(spec.z)).replaceAll('{x}',String(spec.x)).replaceAll('{y}',String(source.tms?(2**spec.z-1-spec.y):spec.y)).replaceAll('{q}',quadKey(spec.z,spec.x,spec.y));
-    const response=await this.fetcher(url,{signal:AbortSignal.timeout(15000)});if(!response.ok)throw new TileError(502,'Repair download failed');
+    const response=await this.fetcher(url,{headers:tileHeaders(url),signal:AbortSignal.timeout(15000)});if(!response.ok)throw new TileError(502,'Repair download failed');
     const chunks:Uint8Array[]=[];let size=0;for await(const chunk of response.body!){size+=chunk.length;if(size>8*1024*1024)throw new TileError(413,'Tile too large');chunks.push(chunk);}
     const bytes=Buffer.concat(chunks);if(verify)await verify(bytes);const result=await this.save(spec,bytes);
     // Preserve older encodings as backups, so a damaged JPG cannot mask a repaired PNG.
@@ -94,7 +101,7 @@ export class MapDiskCache {
     const task=(async()=>{
       const source=sources[spec.source],sub=source.subdomains?.[Math.abs(spec.x+spec.y)%source.subdomains.length]||'';
       const url=source.url_template!.replaceAll('{s}',sub).replaceAll('{z}',String(spec.z)).replaceAll('{x}',String(spec.x)).replaceAll('{y}',String(source.tms?(2**spec.z-1-spec.y):spec.y)).replaceAll('{q}',quadKey(spec.z,spec.x,spec.y));
-      const response=await this.fetcher(url,{headers:{'User-Agent':'SAS.Planet Portable/1.1 (Local Map Cache)','Referer':'https://www.google.com/'},signal:AbortSignal.timeout(15000)});
+      const response=await this.fetcher(url,{headers:tileHeaders(url),signal:AbortSignal.timeout(15000)});
       if(!response.ok)throw new TileError(502,'Map source returned HTTP '+response.status);
       if(Number(response.headers.get('content-length'))>8*1024*1024)throw new TileError(413,'Tile image too large');
       const chunks:Uint8Array[]=[];let size=0;

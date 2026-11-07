@@ -205,40 +205,6 @@
       "attribution": "© OpenTopoMap (CC-BY-SA)",
       "cache_name": "OpenTopoMap"
     },
-    "carto_dark": {
-      "id": "carto_dark",
-      "name": "CartoDB Dark Matter",
-      "category": "Map",
-      "url_template": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-      "subdomains": [
-        "a",
-        "b",
-        "c",
-        "d"
-      ],
-      "max_zoom": 20,
-      "projection": "EPSG:3857",
-      "format": "png",
-      "attribution": "© CartoDB, © OpenStreetMap",
-      "cache_name": "CartoDB.DarkMatter"
-    },
-    "carto_light": {
-      "id": "carto_light",
-      "name": "CartoDB Positron",
-      "category": "Map",
-      "url_template": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-      "subdomains": [
-        "a",
-        "b",
-        "c",
-        "d"
-      ],
-      "max_zoom": 20,
-      "projection": "EPSG:3857",
-      "format": "png",
-      "attribution": "© CartoDB, © OpenStreetMap",
-      "cache_name": "CartoDB.Positron"
-    },
     "yandex_sat": {
       "id": "yandex_sat",
       "name": "Yandex Satellite",
