@@ -72,6 +72,7 @@ def topo_sheet(p):
     zoom = int(p.get('zoom', 15))
     if not 1 <= zoom <= 22:
         raise ValueError('Zoom must be 1–22.')
+    offline = bool(p.get('offline', False))
     title = str(p.get('title') or p.get('sheet_id') or 'Topographic map')[:200]
 
     RC = 150                      # right marginalia column (legend / neighbours)
@@ -95,7 +96,8 @@ def topo_sheet(p):
     # the working CRS and crop exactly to the printed frame.
     tmp = Path(tempfile.gettempdir()) / (uuid.uuid4().hex + '.tif')
     stitch = TileStitcher.stitch_bbox(source_id=source, bbox=tuple(gb), zoom=zoom,
-                                      output_image_path=str(tmp), target_crs='EPSG:3857')
+                                      output_image_path=str(tmp), target_crs='EPSG:3857',
+                                      offline=offline)
     raw = tmp.read_bytes()
     for suf in ('.tif', '.tfw', '.wld', '.prj'):
         try:
@@ -280,6 +282,8 @@ def topo_sheet(p):
                       {'name': 'Georeferenced JP2', 'url': download(jp2_path)}],
             'statistics': {'scale': scale, 'page': page, 'crs': label, 'zoom': zoom,
                            'grid_step_m': step, 'map_bounds': bounds, 'geographic_bbox': gb,
-                           'source': source, 'image_px': [px_w, px_h],
+                           'source': source, 'image_px': [px_w, px_h], 'offline': offline,
                            'tiles': stitch.get('total_tiles'),
+                           'from_cache': stitch.get('from_cache'),
+                           'downloaded': stitch.get('downloaded'),
                            'missing_tiles': max(0, (stitch.get('total_tiles') or 0) - (stitch.get('downloaded_or_cached') or 0))}}

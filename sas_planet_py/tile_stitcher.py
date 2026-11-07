@@ -70,7 +70,8 @@ class TileStitcher:
         output_image_path: str,
         cache_dir: Optional[str] = None,
         concurrency: int = 12,
-        target_crs: str = "EPSG:3857"
+        target_crs: str = "EPSG:3857",
+        offline: bool = False
     ) -> Dict[str, Any]:
         """
         Stitches all tiles covering bbox at given zoom level into a real composite raster.
@@ -120,6 +121,7 @@ class TileStitcher:
                     tiles_data[(x, y)] = data
                 else:
                     tiles_needed.append((x, y))
+        from_cache = len(tiles_data)
 
         # 2. Download missing tiles concurrently.
         # OSM-policy servers (OpenStreetMap, OpenTopoMap, CyclOSM) rate-limit hard and
@@ -127,7 +129,8 @@ class TileStitcher:
         # connections under high concurrency, so cap workers low and retry transient
         # failures with backoff — otherwise tiles come back as blank gaps.
         osm_policy = any(h in url_template for h in ("openstreetmap", "opentopomap", "cyclosm", "tile.osm"))
-        if tiles_needed and url_template:
+        # Offline mode: use only tiles already in the cache; never hit the network.
+        if tiles_needed and url_template and not offline:
             def fetch_tile(coord: Tuple[int, int]) -> Tuple[int, int, bytes]:
                 tx, ty = coord
                 attempts = 4 if osm_policy else 3
@@ -248,6 +251,9 @@ class TileStitcher:
             "num_tiles_y": num_tiles_y,
             "total_tiles": num_tiles_x * num_tiles_y,
             "downloaded_or_cached": len([d for d in tiles_data.values() if d]),
+            "from_cache": from_cache,
+            "downloaded": max(0, len([d for d in tiles_data.values() if d]) - from_cache),
+            "offline": offline,
             "zoom": zoom,
             "format": out_ext.replace(".", ""),
             "crs": target.to_string(),
