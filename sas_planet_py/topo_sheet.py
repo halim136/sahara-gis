@@ -92,10 +92,31 @@ def topo_sheet(p):
              for t, u in [(i / 20, u) for i in range(21) for u in (0, 1)] + [(u, i / 20) for i in range(21) for u in (0, 1)]]
     gb = [min(x for x, _ in perim), min(y for _, y in perim), max(x for x, _ in perim), max(y for _, y in perim)]
 
+    # Cap the working zoom so the stitched composite stays within memory. A big page
+    # at a small scale (e.g. A0 at 1:25,000) stitched at Z17 would need a raster of
+    # tens of thousands of pixels per side (gigabytes) and crash. The sheet is printed
+    # at a bounded raster size anyway, so stitching finer than that adds no visible
+    # detail — drop to the finest zoom that still fits the budget.
+    from .projections import lon_lat_to_tile
+    MAX_SIDE, MAX_PX = 12000, 110_000_000
+
+    def _grid_px(z):
+        xa, yb = lon_lat_to_tile(gb[0], gb[1], z)
+        xb, ya = lon_lat_to_tile(gb[2], gb[3], z)
+        return (abs(xb - xa) + 1) * 256, (abs(yb - ya) + 1) * 256
+
+    stitch_zoom = zoom
+    while stitch_zoom > 1:
+        gw, gh = _grid_px(stitch_zoom)
+        if max(gw, gh) <= MAX_SIDE and gw * gh <= MAX_PX:
+            break
+        stitch_zoom -= 1
+
     # Stitch the source tiles over the geographic frame (web mercator), then warp to
-    # the working CRS and crop exactly to the printed frame.
+    # the working CRS and crop exactly to the printed frame. Cache is read first and
+    # only genuinely missing tiles are downloaded (unless offline is set).
     tmp = Path(tempfile.gettempdir()) / (uuid.uuid4().hex + '.tif')
-    stitch = TileStitcher.stitch_bbox(source_id=source, bbox=tuple(gb), zoom=zoom,
+    stitch = TileStitcher.stitch_bbox(source_id=source, bbox=tuple(gb), zoom=stitch_zoom,
                                       output_image_path=str(tmp), target_crs='EPSG:3857',
                                       offline=offline)
     raw = tmp.read_bytes()
@@ -109,10 +130,15 @@ def topo_sheet(p):
     # detail of the chosen zoom (no blur from downsampling); cap to keep the file
     # and the PDF sane for very large pages / low scales.
     clat = (gb[1] + gb[3]) / 2
-    ground_res = 156543.03392 * math.cos(math.radians(clat)) / (2 ** zoom)  # m/px (web mercator)
+    ground_res = 156543.03392 * math.cos(math.radians(clat)) / (2 ** stitch_zoom)  # m/px (web mercator)
     native_w = width / ground_res if ground_res > 0 else 4000.0
-    px_w = int(min(max(native_w, 1400.0), 12000.0))
-    px_h = max(1, round(px_w * mh / mw))
+    pw_f = min(max(native_w, 1400.0), float(MAX_SIDE))
+    ph_f = pw_f * mh / mw
+    if pw_f * ph_f > MAX_PX:                      # keep the embedded raster in memory
+        s = (MAX_PX / (pw_f * ph_f)) ** 0.5
+        pw_f *= s; ph_f *= s
+    px_w = int(pw_f)
+    px_h = max(1, int(ph_f))
     reference = (from_bounds(*bounds, px_w, px_h), px_w, px_h)
     warped, _ = warped_bytes(raw, work, reference)
     with MemoryFile(warped) as mem, mem.open() as src:
@@ -222,7 +248,7 @@ def topo_sheet(p):
 
     pdf.setFont('Helvetica', 7)
     pdf.drawString(x0, 24, label + '  ·  Grid north  ·  ' + ('Lon/Lat graticule' if geographic else 'Grid ' + (str(round(step / 1000)) + ' km' if step >= 1000 else str(round(step)) + ' m')))
-    pdf.drawRightString(x0 + mw, 24, 'Zoom Z' + str(zoom) + '  ·  ' + str(source))
+    pdf.drawRightString(x0 + mw, 24, 'Zoom Z' + str(stitch_zoom) + ('' if stitch_zoom == zoom else ' (max for page)') + '  ·  ' + str(source))
 
     # ---- Right marginalia column: legend + neighbour index ----
     lx = pw - RC - 14
@@ -280,7 +306,7 @@ def topo_sheet(p):
     pdf.save()
     return {'files': [{'name': page + ' topographic PDF', 'url': download(pdf_path)},
                       {'name': 'Georeferenced JP2', 'url': download(jp2_path)}],
-            'statistics': {'scale': scale, 'page': page, 'crs': label, 'zoom': zoom,
+            'statistics': {'scale': scale, 'page': page, 'crs': label, 'zoom': zoom, 'stitch_zoom': stitch_zoom,
                            'grid_step_m': step, 'map_bounds': bounds, 'geographic_bbox': gb,
                            'source': source, 'image_px': [px_w, px_h], 'offline': offline,
                            'tiles': stitch.get('total_tiles'),
