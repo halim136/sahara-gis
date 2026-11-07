@@ -103,7 +103,13 @@ def topo_sheet(p):
         except OSError:
             pass
 
-    px_w = {'A4': 2000, 'A3': 2600, 'A2': 3400, 'A1': 4400, 'A0': 5600}.get(page, 2600)
+    # Embed at the tiles' native ground resolution so the sheet keeps the full
+    # detail of the chosen zoom (no blur from downsampling); cap to keep the file
+    # and the PDF sane for very large pages / low scales.
+    clat = (gb[1] + gb[3]) / 2
+    ground_res = 156543.03392 * math.cos(math.radians(clat)) / (2 ** zoom)  # m/px (web mercator)
+    native_w = width / ground_res if ground_res > 0 else 4000.0
+    px_w = int(min(max(native_w, 1400.0), 12000.0))
     px_h = max(1, round(px_w * mh / mw))
     reference = (from_bounds(*bounds, px_w, px_h), px_w, px_h)
     warped, _ = warped_bytes(raw, work, reference)

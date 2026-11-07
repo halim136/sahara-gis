@@ -10,6 +10,7 @@ Stitches real map tile blocks into georeferenced rasters (JPEG, BMP, PNG, GeoTIF
 
 import os
 import io
+import time
 import random
 import urllib.request
 from typing import Tuple, List, Dict, Any, Optional
@@ -120,31 +121,40 @@ class TileStitcher:
                 else:
                     tiles_needed.append((x, y))
 
-        # 2. Download missing tiles concurrently
+        # 2. Download missing tiles concurrently.
+        # OSM-policy servers (OpenStreetMap, OpenTopoMap, CyclOSM) rate-limit hard and
+        # need a descriptive User-Agent with no spoofed Referer; they also drop
+        # connections under high concurrency, so cap workers low and retry transient
+        # failures with backoff — otherwise tiles come back as blank gaps.
+        osm_policy = any(h in url_template for h in ("openstreetmap", "opentopomap", "cyclosm", "tile.osm"))
         if tiles_needed and url_template:
             def fetch_tile(coord: Tuple[int, int]) -> Tuple[int, int, bytes]:
                 tx, ty = coord
-                sub = random.choice(subdomains) if subdomains else ""
-                url = url_template.format(z=zoom, x=tx, y=ty, s=sub)
-                osm_like = any(h in url for h in ("openstreetmap", "opentopomap", "cyclosm", "tile.osm"))
-                headers = {
-                    "User-Agent": "SaharaGIS/1.5 (+https://github.com/halim136/sahara-gis)" if osm_like else DEFAULT_USER_AGENT,
-                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                }
-                if not osm_like:
-                    headers["Referer"] = "https://www.google.com/"
-                req = urllib.request.Request(url, headers=headers)
-                try:
-                    with urllib.request.urlopen(req, timeout=12) as resp:
-                        content = resp.read()
-                        if content:
-                            storage.save_tile(source_id, zoom, tx, ty, content, ext)
-                            return tx, ty, content
-                except Exception:
-                    pass
+                attempts = 4 if osm_policy else 3
+                for attempt in range(attempts):
+                    sub = random.choice(subdomains) if subdomains else ""
+                    url = url_template.format(z=zoom, x=tx, y=ty, s=sub)
+                    headers = {
+                        "User-Agent": "SaharaGIS/1.5 (+https://github.com/halim136/sahara-gis)" if osm_policy else DEFAULT_USER_AGENT,
+                        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                    }
+                    if not osm_policy:
+                        headers["Referer"] = "https://www.google.com/"
+                    req = urllib.request.Request(url, headers=headers)
+                    try:
+                        with urllib.request.urlopen(req, timeout=15) as resp:
+                            content = resp.read()
+                            if content:
+                                storage.save_tile(source_id, zoom, tx, ty, content, ext)
+                                return tx, ty, content
+                    except Exception:
+                        pass
+                    # Backoff before the next attempt (longer for OSM-policy hosts).
+                    if attempt < attempts - 1:
+                        time.sleep((0.8 if osm_policy else 0.4) * (attempt + 1))
                 return tx, ty, b""
 
-            workers = max(1, min(concurrency, len(tiles_needed)))
+            workers = max(1, min(2 if osm_policy else concurrency, len(tiles_needed)))
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 futures = [pool.submit(fetch_tile, c) for c in tiles_needed]
                 for fut in as_completed(futures):
