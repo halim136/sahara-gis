@@ -456,7 +456,7 @@ export const MarksManagerModal: React.FC<MarksManagerModalProps> = ({
               {tableRows.length === 0 ? (
                 <div className="text-center py-10 text-slate-500 text-xs">{isAr ? 'لا توجد صفوف مطابقة.' : 'No matching rows.'}</div>
               ) : (
-                <table className="w-full text-[11px] border-collapse">
+                <table className="w-max min-w-full text-[11px] border-collapse">
                   <thead className="sticky top-0 bg-slate-950 text-slate-400">
                     <tr className="text-start">
                       <th className="px-2 py-1.5 text-start font-semibold border-b border-slate-800">{isAr ? 'الاسم' : 'Name'}</th>

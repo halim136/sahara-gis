@@ -69,6 +69,13 @@
 .desktop-tool:nth-of-type(4n+2) {color:#229784;}
 .desktop-tool:nth-of-type(4n+3) {color:#b27b24;}
 .desktop-separator {height:27px;border-inline-start:1px solid var(--line);margin:0 4px;}
+/* Visible, Windows-like scrollbars in app windows and scroll areas. */
+.sas-desktop ::-webkit-scrollbar{width:12px;height:12px;}
+.sas-desktop ::-webkit-scrollbar-track{background:rgba(100,116,139,.14);border-radius:6px;}
+.sas-desktop ::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6);border-radius:6px;border:2px solid transparent;background-clip:content-box;}
+.sas-desktop ::-webkit-scrollbar-thumb:hover{background:rgba(100,116,139,.9);}
+.sas-desktop ::-webkit-scrollbar-corner{background:transparent;}
+.sas-desktop .sas-window,.sas-desktop .sas-window *{scrollbar-width:thin;}
 /* Permanent feature labels on the map. */
 .sas-feature-label{background:rgba(15,23,42,.82)!important;border:1px solid rgba(148,163,184,.5)!important;color:#f1f5f9!important;font:600 11px Cairo,sans-serif!important;padding:1px 5px!important;border-radius:3px!important;box-shadow:0 1px 3px #0005!important;white-space:nowrap!important;}
 .sas-feature-label::before{display:none!important;}
