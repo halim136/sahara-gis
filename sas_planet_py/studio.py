@@ -192,6 +192,9 @@ def dispatch(operation,p):
     if operation=='digitize_raster':
         from .map_digitize import digitize
         return digitize({**p,'path':uploaded(p['id'],p.get('kind','raster'))})
+    if operation=='topo_sheet':
+        from .topo_sheet import topo_sheet
+        return topo_sheet(p)
     if operation=='georeference':
         from .georeference import georeference
         return georeference(uploaded(p['id'],'scan'),p['gcps'],p.get('crs','EPSG:4326'))
