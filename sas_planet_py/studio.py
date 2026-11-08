@@ -137,7 +137,7 @@ def dispatch(operation,p):
         return export_print(p)
     if operation=='sheets25k':
         from .map_sheets import sheet_grid
-        return sheet_grid(p['bbox'],p.get('datum','nord_sahara'),p.get('export',False))
+        return sheet_grid(p['bbox'],p.get('datum','nord_sahara'),p.get('export',False),p.get('scale',25000))
     if operation=='terrain_prepare':
         from .terrain import CACHE
         resolution=p.get('resolution',129)
