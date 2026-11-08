@@ -61,6 +61,7 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
   const [topoLandscape, setTopoLandscape] = useState<boolean>(false);
   const [topoTitle, setTopoTitle] = useState<string>('');
   const [topoOffline, setTopoOffline] = useState<boolean>(false);
+  const [topoFullRes, setTopoFullRes] = useState<boolean>(false);
   const [topoBusy, setTopoBusy] = useState<boolean>(false);
   const [topoResult, setTopoResult] = useState<any>(null);
   const [topoError, setTopoError] = useState<string>('');
@@ -214,7 +215,8 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
           page_h_cm: topoHcm,
           landscape: topoLandscape,
           title: topoTitle,
-          offline: topoOffline
+          offline: topoOffline,
+          full_res: topoFullRes
         })
       });
       const data = await res.json();
@@ -864,7 +866,14 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={topoLandscape} onChange={(e) => setTopoLandscape(e.target.checked)} className="accent-orange-500" />{isAr ? 'اتجاه أفقي (Landscape)' : 'Landscape orientation'}</label>
                   <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={topoOffline} onChange={(e) => setTopoOffline(e.target.checked)} className="accent-orange-500" />{isAr ? 'عدم الاتصال — الكاش فقط (لا تنزيل)' : 'Offline — cached tiles only'}</label>
+                  <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={topoFullRes} onChange={(e) => setTopoFullRes(e.target.checked)} className="accent-orange-500" />{isAr ? 'دقة كاملة بالزوم المطلوب (GeoTIFF إضافي)' : 'Full resolution at requested zoom (extra GeoTIFF)'}</label>
                 </div>
+
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {isAr
+                    ? 'ملاحظة: تُضبط ورقة الـ PDF/JP2 على التفاصيل التي يُظهرها حجم الورق والمقياس فعلياً، لذا قد يُخفَّض التكبير تلقائياً (زوم أعلى لا يُضيف وضوحاً مرئياً على الورق ويُبطئ كثيراً). لتفاصيل أدقّ على الورقة: كبّر المقياس (مثلاً 1:10000) أو حجم الورق. وللحصول على كامل تفاصيل الزوم المطلوب كملف GIS، فعّل «دقة كاملة» أعلاه (أو استعمل تبويب الدمج).'
+                    : 'Note: the PDF/JP2 sheet is matched to the detail the page size and scale can actually show, so the zoom may be auto-reduced (higher zoom adds no visible detail on paper and is far slower). For a sharper sheet raise the scale (e.g. 1:10,000) or the page size. To keep the full requested-zoom detail as a GIS file, enable "Full resolution" above (or use the Stitch tab).'}
+                </p>
               </div>
 
               <button

@@ -84,6 +84,7 @@ def topo_sheet(p):
     if not 1 <= zoom <= 22:
         raise ValueError('Zoom must be 1–22.')
     offline = bool(p.get('offline', False))
+    full_res = bool(p.get('full_res', False))
     title = str(p.get('title') or p.get('sheet_id') or 'Topographic map')[:200]
 
     RC = 150                      # right marginalia column (legend / neighbours)
@@ -315,11 +316,34 @@ def topo_sheet(p):
 
     pdf.showPage()
     pdf.save()
-    return {'files': [{'name': page + ' topographic PDF', 'url': download(pdf_path)},
-                      {'name': 'Georeferenced JP2', 'url': download(jp2_path)}],
+
+    files = [{'name': page + ' topographic PDF', 'url': download(pdf_path)},
+             {'name': 'Georeferenced JP2', 'url': download(jp2_path)}]
+    # Optional full-resolution deliverable at the EXACT requested zoom. The sheet
+    # above is capped to the page's printable detail (more zoom adds no visible
+    # detail on paper), so a separate memory-streamed GeoTIFF carries the full
+    # zoom for GIS work. Produced in the chosen CRS when the streaming engine
+    # supports it, else Web Mercator.
+    fullres_note = None
+    if full_res:
+        try:
+            allowed = {'EPSG:3857', 'EPSG:4326', 'EPSG:30729', 'EPSG:30730', 'EPSG:30731', 'EPSG:30732'}
+            we = work.to_epsg()
+            fr_target = ('EPSG:%d' % we) if (we and ('EPSG:%d' % we) in allowed) else 'EPSG:3857'
+            fr_path = output_file('topo_fullres', '.tif')
+            fr = TileStitcher.stitch_bbox(source_id=source, bbox=tuple(gb), zoom=zoom,
+                                          output_image_path=str(fr_path), target_crs=fr_target,
+                                          offline=offline)
+            files.append({'name': 'Full-res GeoTIFF Z%d — %s' % (zoom, fr.get('crs_name') or fr_target),
+                          'url': download(Path(fr['image_path']))})
+        except Exception as e:
+            fullres_note = str(e)
+
+    return {'files': files,
             'statistics': {'scale': scale, 'page': page, 'crs': label, 'zoom': zoom, 'stitch_zoom': stitch_zoom,
                            'grid_step_m': step, 'map_bounds': bounds, 'geographic_bbox': gb,
                            'source': source, 'image_px': [px_w, px_h], 'offline': offline,
+                           'full_res': full_res, 'full_res_error': fullres_note,
                            'tiles': stitch.get('total_tiles'),
                            'from_cache': stitch.get('from_cache'),
                            'downloaded': stitch.get('downloaded'),
