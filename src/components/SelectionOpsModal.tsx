@@ -46,7 +46,21 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
   onApplyImportedSelection
 }) => {
   const isAr = lang === 'ar';
-  const [activeTab, setActiveTab] = useState<'download' | 'stitch' | 'vector' | 'mbtiles' | 'python'>('download');
+  const [activeTab, setActiveTab] = useState<'download' | 'stitch' | 'topo' | 'vector' | 'mbtiles' | 'python'>('download');
+  const MAX_STITCH_PX = 300_000_000; // keep in sync with tile_stitcher MAX_OUTPUT_PX
+
+  // Topographic sheet tab state
+  const [topoSource, setTopoSource] = useState<string>(currentSource.id);
+  const [topoZoom, setTopoZoom] = useState<number>(17);
+  const [topoCrs, setTopoCrs] = useState<string>('utm_ns_auto');
+  const [topoScale, setTopoScale] = useState<number>(25000);
+  const [topoPage, setTopoPage] = useState<string>('A1');
+  const [topoLandscape, setTopoLandscape] = useState<boolean>(false);
+  const [topoTitle, setTopoTitle] = useState<string>('');
+  const [topoOffline, setTopoOffline] = useState<boolean>(false);
+  const [topoBusy, setTopoBusy] = useState<boolean>(false);
+  const [topoResult, setTopoResult] = useState<any>(null);
+  const [topoError, setTopoError] = useState<string>('');
 
   // Download Tab State
   const [selectedSourceId, setSelectedSourceId] = useState<string>(currentSource.id);
@@ -174,6 +188,38 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
       setStitchError(err.message || 'Network error during stitch');
     } finally {
       setIsStitching(false);
+    }
+  };
+
+  // Handle topographic sheet generation (PDF + georeferenced JP2)
+  const handleGenerateTopo = async () => {
+    setTopoBusy(true);
+    setTopoError('');
+    setTopoResult(null);
+    try {
+      const res = await fetch('/api/studio/topo_sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bbox: [bbox.min_lon, bbox.min_lat, bbox.max_lon, bbox.max_lat],
+          source: topoSource,
+          zoom: topoZoom,
+          crs: topoCrs,
+          scale: topoScale,
+          page: topoPage,
+          landscape: topoLandscape,
+          title: topoTitle,
+          offline: topoOffline
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Topographic sheet failed');
+      setTopoResult(data.result);
+      onCacheUpdated?.();
+    } catch (err: any) {
+      setTopoError(err.message || 'Network error');
+    } finally {
+      setTopoBusy(false);
     }
   };
 
@@ -356,6 +402,18 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
           >
             <ImageIcon className="w-4 h-4" />
             <span>{isAr ? 'دمج وتصدير الصور (Stitch)' : 'Stitch Image'}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('topo')}
+            className={`flex items-center gap-2 px-4 py-2.5 font-semibold border-b-2 transition-all ${
+              activeTab === 'topo'
+                ? 'border-orange-500 text-orange-400 bg-slate-900/60'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <MapPin className="w-4 h-4" />
+            <span>{isAr ? 'خريطة طبوغرافية (Topo Sheet)' : 'Topographic Sheet'}</span>
           </button>
 
           <button
@@ -643,13 +701,25 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
                     <span>{isAr ? 'عدد البلاطات:' : 'Tiles Count:'}</span>
                     <span>{stitchBreakdown.xCount} x {stitchBreakdown.yCount} = {stitchBreakdown.tiles} tiles</span>
                   </div>
+                  <div className="flex justify-between text-slate-400 text-[11px]">
+                    <span>{isAr ? 'الدقة الإجمالية:' : 'Megapixels:'}</span>
+                    <span className={stitchWidthPx * stitchHeightPx > MAX_STITCH_PX ? 'text-rose-400 font-bold' : ''}>{(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} MP</span>
+                  </div>
                 </div>
+                {stitchWidthPx * stitchHeightPx > MAX_STITCH_PX && (
+                  <div className="p-2.5 rounded bg-rose-950/40 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                    <span>{isAr
+                      ? `الحجم ${(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} ميغابكسل يتجاوز الحد الآمن (${(MAX_STITCH_PX / 1e6).toFixed(0)} م.ب) وقد يُجمِّد الحاسوب. خفّض التكبير أو صغّر المنطقة.`
+                      : `${(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} MP exceeds the safe limit (${(MAX_STITCH_PX / 1e6).toFixed(0)} MP) and can freeze the machine. Lower the zoom or shrink the area.`}</span>
+                  </div>
+                )}
               </div>
 
               {/* Stitch Action Button */}
               <button
                 onClick={handleStartStitch}
-                disabled={isStitching}
+                disabled={isStitching || stitchWidthPx * stitchHeightPx > MAX_STITCH_PX}
                 className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:bg-slate-800 disabled:text-slate-500"
               >
                 {isStitching ? (
@@ -704,6 +774,107 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
                       <span>{isAr ? 'تحميل ملف الإسناد (WorldFile)' : 'Download WorldFile'}</span>
                     </a>
                     {stitchResult.projection_file_url && <a href={stitchResult.projection_file_url} download className="py-2 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold text-center transition-colors flex items-center justify-center gap-1.5"><MapPin className="w-3.5 h-3.5"/><span>.prj</span></a>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: TOPOGRAPHIC SHEET */}
+          {activeTab === 'topo' && (
+            <div className="space-y-4">
+              <div className="bg-slate-950/70 p-3 rounded-lg border border-slate-800 space-y-3">
+                <div className="text-xs text-slate-300">
+                  {isAr
+                    ? 'ينتج غلاف خريطة طبوغرافية كاملاً للمنطقة المحددة: إطار، شبكة كيلومترية، عنوان، سلم رسم، سهم الشمال، مفتاح وأوراق مجاورة — مع ملف PDF للطباعة وصورة JP2 مُسندة جغرافياً بنظام الإحداثيات المختار. يقرأ الكاش أولاً ولا يُنزّل إلا الناقص، ويُحدَّد تكبير الدمج تلقائياً بما يناسب حجم الورق لتفادي تجميد الحاسوب.'
+                    : 'Produces a full topographic map sheet for the selected area: neatline, kilometric grid, title, scale bar, north arrow, legend and neighbour index — as a print PDF plus a georeferenced JP2 in the chosen CRS. Cache is read first (only missing tiles download), and the working zoom is auto-capped to the page size to avoid freezing the machine.'}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'مصدر الخريطة:' : 'Map source:'}</label>
+                  <select value={topoSource} onChange={(e) => setTopoSource(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200">
+                    {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'مستوى التكبير (Zoom):' : 'Zoom level:'}</label>
+                    <select value={topoZoom} onChange={(e) => setTopoZoom(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200">
+                      {Array.from({ length: 19 }, (_, i) => i + 4).map((z) => <option key={z} value={z}>Z{z}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'نظام الإحداثيات:' : 'Coordinate system:'}</label>
+                    <select value={topoCrs} onChange={(e) => setTopoCrs(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200">
+                      <option value="utm_ns_auto">{isAr ? 'Nord Sahara UTM (تلقائي)' : 'Nord Sahara UTM (auto)'}</option>
+                      <option value="EPSG:30729">Nord Sahara 1959 / UTM 29N — EPSG:30729</option>
+                      <option value="EPSG:30730">Nord Sahara 1959 / UTM 30N — EPSG:30730</option>
+                      <option value="EPSG:30731">Nord Sahara 1959 / UTM 31N — EPSG:30731</option>
+                      <option value="EPSG:30732">Nord Sahara 1959 / UTM 32N — EPSG:30732</option>
+                      <option value="lambert_nord">Lambert Nord Algérie — EPSG:30791</option>
+                      <option value="lambert_sud">Lambert Sud Algérie — EPSG:30792</option>
+                      <option value="EPSG:3857">Web Mercator — EPSG:3857</option>
+                      <option value="wgs84">WGS84 (lon/lat) — EPSG:4326</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'المقياس 1:' : 'Scale 1:'}</label>
+                    <input type="number" min={100} max={5000000} step={500} value={topoScale} onChange={(e) => setTopoScale(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'حجم الورق (أبعاد الخريطة):' : 'Paper size:'}</label>
+                    <select value={topoPage} onChange={(e) => setTopoPage(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200">
+                      {['A4', 'A3', 'A2', 'A1', 'A0'].map((pg) => <option key={pg} value={pg}>{pg}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'عنوان الخريطة:' : 'Map title:'}</label>
+                  <input value={topoTitle} onChange={(e) => setTopoTitle(e.target.value)} placeholder={isAr ? 'اسم الورقة' : 'Sheet name'} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200" />
+                </div>
+
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={topoLandscape} onChange={(e) => setTopoLandscape(e.target.checked)} className="accent-orange-500" />{isAr ? 'اتجاه أفقي (Landscape)' : 'Landscape orientation'}</label>
+                  <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={topoOffline} onChange={(e) => setTopoOffline(e.target.checked)} className="accent-orange-500" />{isAr ? 'عدم الاتصال — الكاش فقط (لا تنزيل)' : 'Offline — cached tiles only'}</label>
+                </div>
+              </div>
+
+              <button
+                onClick={handleGenerateTopo}
+                disabled={topoBusy}
+                className="w-full py-2.5 px-4 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:bg-slate-800 disabled:text-slate-500"
+              >
+                {topoBusy ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>{isAr ? 'جاري إنجاز الخريطة…' : 'Generating sheet…'}</span></> : <><MapPin className="w-4 h-4" /><span>{isAr ? 'أنجِز الخريطة الطبوغرافية (PDF + JP2)' : 'Generate Topographic Sheet (PDF + JP2)'}</span></>}
+              </button>
+
+              {topoError && (
+                <div className="p-2.5 rounded bg-rose-950/40 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{topoError}</span>
+                </div>
+              )}
+
+              {topoResult && (
+                <div className="p-3.5 bg-orange-950/30 border border-orange-800 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2 text-orange-300 text-sm font-bold">
+                    <CheckCircle2 className="w-5 h-5 text-orange-400" />
+                    <span>{isAr ? 'تم إنجاز الخريطة الطبوغرافية!' : 'Topographic sheet ready!'}</span>
+                  </div>
+                  {topoResult.statistics && (
+                    <div className="text-xs text-slate-300 font-mono space-y-1">
+                      <div>{isAr ? 'التكبير المطلوب/الفعلي:' : 'Zoom req/used:'} Z{topoResult.statistics.zoom} → Z{topoResult.statistics.stitch_zoom}</div>
+                      <div>{isAr ? 'البلاطات:' : 'Tiles:'} {topoResult.statistics.tiles} · {isAr ? 'من الكاش:' : 'cache:'} {topoResult.statistics.from_cache} · {isAr ? 'نُزّلت:' : 'downloaded:'} {topoResult.statistics.downloaded} · {isAr ? 'ناقصة:' : 'missing:'} {topoResult.statistics.missing_tiles}</div>
+                      <div>{isAr ? 'الدقة:' : 'Pixels:'} {topoResult.statistics.image_px?.[0]} x {topoResult.statistics.image_px?.[1]} · {topoResult.statistics.crs}</div>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {topoResult.files?.map((f: any, i: number) => (
+                      <a key={i} href={f.url} download className="flex-1 min-w-[140px] py-2 px-3 rounded bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold text-center transition-colors flex items-center justify-center gap-1.5">
+                        <Download className="w-3.5 h-3.5" /><span>{f.name}</span>
+                      </a>
+                    ))}
                   </div>
                 </div>
               )}

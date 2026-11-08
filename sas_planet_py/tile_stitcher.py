@@ -91,6 +91,17 @@ class TileStitcher:
         width_px = num_tiles_x * 256
         height_px = num_tiles_y * 256
 
+        # Memory guard. The composite is held as a PIL image plus several numpy
+        # copies (reprojection source + destination), so a very large grid can
+        # exhaust RAM and freeze the whole machine. Refuse early with a clear
+        # message instead of trying to allocate gigabytes.
+        MAX_OUTPUT_PX = 300_000_000  # ~17300 x 17300; ~0.9 GB per RGB copy
+        if width_px * height_px > MAX_OUTPUT_PX:
+            raise ValueError(
+                f"Output {width_px}x{height_px}px ({width_px * height_px / 1e6:.0f} MP) is too large "
+                f"for memory (limit {MAX_OUTPUT_PX / 1e6:.0f} MP). Lower the zoom or select a smaller area."
+            )
+
         # Actual geographic bounds of the stitched tile grid
         nw_bounds = tile_bounds(start_x, start_y, zoom)
         se_bounds = tile_bounds(end_x, end_y, zoom)
