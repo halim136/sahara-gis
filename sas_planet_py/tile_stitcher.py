@@ -20,6 +20,8 @@ import numpy as np
 from pyproj import CRS, Transformer
 from rasterio.transform import from_bounds
 from rasterio.warp import calculate_default_transform, reproject, Resampling
+from rasterio.windows import Window
+from rasterio.vrt import WarpedVRT
 import rasterio
 
 # Disable decompression bomb limit for high-resolution GIS composites
@@ -91,16 +93,25 @@ class TileStitcher:
         width_px = num_tiles_x * 256
         height_px = num_tiles_y * 256
 
-        # Memory guard. The composite is held as a PIL image plus several numpy
-        # copies (reprojection source + destination), so a very large grid can
-        # exhaust RAM and freeze the whole machine. Refuse early with a clear
-        # message instead of trying to allocate gigabytes.
-        MAX_OUTPUT_PX = 300_000_000  # ~17300 x 17300; ~0.9 GB per RGB copy
-        if width_px * height_px > MAX_OUTPUT_PX:
+        # The in-memory path holds the whole composite plus numpy copies, so above a
+        # budget it would exhaust RAM and freeze the machine. For large outputs switch
+        # to the streaming path, which writes a tiled GeoTIFF strip-by-strip (only one
+        # row of tiles in RAM) and reprojects block-by-block via a WarpedVRT. Above a
+        # hard disk-bound ceiling, refuse with a clear message.
+        MAX_INMEM_PX = 300_000_000      # ~17300 px/side; in-memory path, any format
+        MAX_STREAM_PX = 5_000_000_000   # streamed GeoTIFF path (bounded memory)
+        allowed_crs = {"EPSG:3857", "EPSG:4326", "EPSG:30729", "EPSG:30730", "EPSG:30731", "EPSG:30732"}
+        target_crs = str(target_crs).upper()
+        if target_crs not in allowed_crs:
+            raise ValueError("Select a supported output coordinate system.")
+        if width_px * height_px > MAX_STREAM_PX:
             raise ValueError(
-                f"Output {width_px}x{height_px}px ({width_px * height_px / 1e6:.0f} MP) is too large "
-                f"for memory (limit {MAX_OUTPUT_PX / 1e6:.0f} MP). Lower the zoom or select a smaller area."
+                f"Output {width_px}x{height_px}px (~{width_px * height_px / 1e6:.0f} MP) exceeds the maximum "
+                f"({MAX_STREAM_PX / 1e6:.0f} MP). Lower the zoom or select a smaller area."
             )
+        if width_px * height_px > MAX_INMEM_PX:
+            return cls._stitch_streaming(source_id, bbox, zoom, output_image_path,
+                                         cache_dir, concurrency, target_crs, offline)
 
         # Actual geographic bounds of the stitched tile grid
         nw_bounds = tile_bounds(start_x, start_y, zoom)
@@ -278,3 +289,150 @@ class TileStitcher:
             },
             "world_file_params": wf_params
         }
+
+    @classmethod
+    def _stitch_streaming(cls, source_id, bbox, zoom, output_image_path, cache_dir,
+                          concurrency, target_crs, offline):
+        """Memory-bounded stitch for very large rasters. Writes a tiled, compressed
+        BigTIFF one tile-row at a time (only a single 256-px strip is held in RAM),
+        then reprojects block-by-block through a WarpedVRT. Output is always GeoTIFF
+        (the only format that scales to gigapixel sizes and is read by QGIS / ArcGIS /
+        Global Mapper). Cache is read first; only missing tiles download unless offline."""
+        import tempfile as _tmp
+        min_lon, min_lat, max_lon, max_lat = bbox
+        x_min, y_max = lon_lat_to_tile(min_lon, min_lat, zoom)
+        x_max, y_min = lon_lat_to_tile(max_lon, max_lat, zoom)
+        start_x, end_x = min(x_min, x_max), max(x_min, x_max)
+        start_y, end_y = min(y_min, y_max), max(y_min, y_max)
+        num_tiles_x = end_x - start_x + 1
+        num_tiles_y = end_y - start_y + 1
+        width_px = num_tiles_x * 256
+        height_px = num_tiles_y * 256
+        nw = tile_bounds(start_x, start_y, zoom)
+        se = tile_bounds(end_x, end_y, zoom)
+        actual_min_lon, actual_max_lat = nw["min_lon"], nw["max_lat"]
+        actual_max_lon, actual_min_lat = se["max_lon"], se["min_lat"]
+
+        storage = FileSystemStorage(base_dir=cache_dir)
+        source = get_source(source_id)
+        url_template = source.get("url_template", "")
+        subdomains = source.get("subdomains", ["0", "1", "2", "3"])
+        ext = source.get("format", "jpg")
+        osm_policy = any(h in url_template for h in ("openstreetmap", "opentopomap", "cyclosm", "tile.osm"))
+        counters = {"from_cache": 0, "downloaded": 0}
+
+        def get_tile_bytes(tx, ty):
+            for ce in (ext, "jpg", "png", "jpeg", "webp"):
+                data = storage.load_tile(source_id, zoom, tx, ty, ce)
+                if data:
+                    return data, True
+            if offline or not url_template:
+                return None, False
+            attempts = 4 if osm_policy else 3
+            for attempt in range(attempts):
+                sub = random.choice(subdomains) if subdomains else ""
+                url = url_template.format(z=zoom, x=tx, y=ty, s=sub)
+                headers = {"User-Agent": "SaharaGIS/1.5 (+https://github.com/halim136/sahara-gis)" if osm_policy else DEFAULT_USER_AGENT,
+                           "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"}
+                if not osm_policy:
+                    headers["Referer"] = "https://www.google.com/"
+                try:
+                    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=15) as resp:
+                        content = resp.read()
+                        if content:
+                            storage.save_tile(source_id, zoom, tx, ty, content, ext)
+                            return content, False
+                except Exception:
+                    pass
+                if attempt < attempts - 1:
+                    time.sleep((0.8 if osm_policy else 0.4) * (attempt + 1))
+            return None, False
+
+        src_crs = CRS.from_epsg(3857)
+        mercator = Transformer.from_crs(4326, src_crs, always_xy=True)
+        west, south = mercator.transform(actual_min_lon, actual_min_lat)
+        east, north = mercator.transform(actual_max_lon, actual_max_lat)
+        src_transform = from_bounds(west, south, east, north, width_px, height_px)
+
+        os.makedirs(os.path.dirname(os.path.abspath(output_image_path)), exist_ok=True)
+        out_dir = os.path.dirname(os.path.abspath(output_image_path))
+        tmp3857 = _tmp.NamedTemporaryFile(suffix="_3857.tif", delete=False, dir=out_dir)
+        tmp3857.close()
+        profile = dict(driver="GTiff", width=width_px, height=height_px, count=3, dtype="uint8",
+                       crs=src_crs, transform=src_transform, tiled=True, blockxsize=256,
+                       blockysize=256, compress="deflate", predictor=2, BIGTIFF="YES")
+        try:
+            with rasterio.open(tmp3857.name, "w", **profile) as dst:
+                for ty in range(start_y, end_y + 1):
+                    strip = np.full((3, 256, width_px), 255, dtype=np.uint8)
+                    coords = [(tx, ty) for tx in range(start_x, end_x + 1)]
+                    workers = max(1, min(2 if osm_policy else concurrency, len(coords)))
+
+                    def worker(c):
+                        tx, _ = c
+                        d, cached = get_tile_bytes(tx, ty)
+                        return tx, d, cached
+
+                    with ThreadPoolExecutor(max_workers=workers) as pool:
+                        for tx, d, cached in pool.map(worker, coords):
+                            if not d:
+                                continue
+                            counters["from_cache" if cached else "downloaded"] += 1
+                            try:
+                                im = Image.open(io.BytesIO(d))
+                                if im.mode != "RGB":
+                                    im = im.convert("RGB")
+                                a = np.asarray(im, dtype=np.uint8)
+                                if a.shape[:2] == (256, 256):
+                                    col = (tx - start_x) * 256
+                                    strip[:, :, col:col + 256] = np.moveaxis(a, 2, 0)
+                            except Exception:
+                                pass
+                    dst.write(strip, window=Window(0, (ty - start_y) * 256, width_px, 256))
+
+            final_path = output_image_path
+            if os.path.splitext(final_path)[1].lower() not in (".tif", ".tiff"):
+                final_path = os.path.splitext(output_image_path)[0] + ".tif"
+            target = CRS.from_user_input(target_crs)
+            if target == src_crs:
+                if os.path.exists(final_path):
+                    os.remove(final_path)
+                os.replace(tmp3857.name, final_path)
+                out_transform, out_crs, out_width, out_height = src_transform, src_crs, width_px, height_px
+            else:
+                with rasterio.open(tmp3857.name) as src_ds, \
+                        WarpedVRT(src_ds, crs=target, resampling=Resampling.bilinear) as vrt:
+                    out_transform, out_width, out_height, out_crs = vrt.transform, vrt.width, vrt.height, target
+                    oprofile = dict(driver="GTiff", width=out_width, height=out_height, count=3,
+                                    dtype="uint8", crs=target, transform=out_transform, tiled=True,
+                                    blockxsize=256, blockysize=256, compress="deflate", predictor=2, BIGTIFF="YES")
+                    with rasterio.open(final_path, "w", **oprofile) as out_ds:
+                        for _, win in out_ds.block_windows(1):
+                            out_ds.write(vrt.read(window=win), window=win)
+                os.remove(tmp3857.name)
+        finally:
+            if os.path.exists(tmp3857.name):
+                try:
+                    os.remove(tmp3857.name)
+                except OSError:
+                    pass
+
+        wf_params = cls.calculate_world_file_params(out_transform)
+        wf_path = os.path.splitext(final_path)[0] + ".tfw"
+        cls.write_world_file(wf_path, wf_params)
+        universal = os.path.splitext(final_path)[0] + ".wld"
+        cls.write_world_file(universal, wf_params)
+        prj_path = os.path.splitext(final_path)[0] + ".prj"
+        with open(prj_path, "w", encoding="utf-8") as f:
+            f.write(out_crs.to_wkt())
+
+        return {"image_path": final_path, "world_file_path": wf_path, "universal_wld_path": universal,
+                "width": out_width, "height": out_height, "num_tiles_x": num_tiles_x,
+                "num_tiles_y": num_tiles_y, "total_tiles": num_tiles_x * num_tiles_y,
+                "downloaded_or_cached": counters["from_cache"] + counters["downloaded"],
+                "from_cache": counters["from_cache"], "downloaded": counters["downloaded"],
+                "offline": offline, "zoom": zoom, "format": "tif", "crs": out_crs.to_string(),
+                "crs_name": out_crs.name, "projection_file_path": prj_path, "streamed": True,
+                "bounds": {"min_lon": actual_min_lon, "min_lat": actual_min_lat,
+                           "max_lon": actual_max_lon, "max_lat": actual_max_lat},
+                "world_file_params": wf_params}

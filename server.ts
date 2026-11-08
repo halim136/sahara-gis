@@ -329,8 +329,11 @@ print(json.dumps(res))
   try {
     const data = JSON.parse(result.stdout);
     const wfExt = ext === 'jpg' ? '.jgw' : (ext === 'png' ? '.pgw' : (ext === 'tif' ? '.tfw' : (ext === 'jp2' ? '.j2w' : '.bpw')));
+    // A streamed large raster is always written as GeoTIFF, so trust the real paths
+    // the engine returned rather than the originally requested extension.
+    const imgName = path.basename(data.image_path || outFileName);
     const wfName = path.basename(data.world_file_path || outFileName.replace(`.${ext}`, wfExt));
-    data.download_url = `/exports/${outFileName}`;
+    data.download_url = `/exports/${imgName}`;
     data.world_file_url = `/exports/${wfName}`;
     data.projection_file_url = `/exports/${path.basename(data.projection_file_path)}`;
     res.json({ success: true, result: data });

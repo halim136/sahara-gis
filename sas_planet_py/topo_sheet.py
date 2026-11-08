@@ -61,9 +61,20 @@ def topo_sheet(p):
     geographic = not crs.is_projected
     work = crs if crs.is_projected else _auto_utm(bbox)
     page = p.get('page', 'A1')
-    if page not in PAGES:
-        raise ValueError('Select A4, A3, A2, A1 or A0.')
-    size = landscape(PAGES[page]) if p.get('landscape', False) else PAGES[page]
+    if page == 'custom':
+        try:
+            w_cm = float(p.get('page_w_cm', 0))
+            h_cm = float(p.get('page_h_cm', 0))
+        except (TypeError, ValueError):
+            raise ValueError('Enter the width and height in centimetres.')
+        if not (5.0 <= w_cm <= 400.0 and 5.0 <= h_cm <= 400.0):
+            raise ValueError('Custom width/height must be 5–400 cm.')
+        CM = 72.0 / 2.54                      # points per centimetre
+        size = (w_cm * CM, h_cm * CM)
+    else:
+        if page not in PAGES:
+            raise ValueError('Select A4, A3, A2, A1, A0 or custom.')
+        size = landscape(PAGES[page]) if p.get('landscape', False) else PAGES[page]
     pw, ph = size
     scale = float(p.get('scale', 25000))
     if not 100 <= scale <= 5000000:

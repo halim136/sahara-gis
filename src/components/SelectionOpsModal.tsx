@@ -47,7 +47,8 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
 }) => {
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'download' | 'stitch' | 'topo' | 'vector' | 'mbtiles' | 'python'>('download');
-  const MAX_STITCH_PX = 300_000_000; // keep in sync with tile_stitcher MAX_OUTPUT_PX
+  const MAX_INMEM_PX = 300_000_000;    // in-memory path (any format) — keep in sync with tile_stitcher
+  const MAX_STREAM_PX = 5_000_000_000; // streamed GeoTIFF ceiling (bounded memory)
 
   // Topographic sheet tab state
   const [topoSource, setTopoSource] = useState<string>(currentSource.id);
@@ -55,6 +56,8 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
   const [topoCrs, setTopoCrs] = useState<string>('utm_ns_auto');
   const [topoScale, setTopoScale] = useState<number>(25000);
   const [topoPage, setTopoPage] = useState<string>('A1');
+  const [topoWcm, setTopoWcm] = useState<number>(50);
+  const [topoHcm, setTopoHcm] = useState<number>(70);
   const [topoLandscape, setTopoLandscape] = useState<boolean>(false);
   const [topoTitle, setTopoTitle] = useState<string>('');
   const [topoOffline, setTopoOffline] = useState<boolean>(false);
@@ -207,6 +210,8 @@ export const SelectionOpsModal: React.FC<SelectionOpsModalProps> = ({
           crs: topoCrs,
           scale: topoScale,
           page: topoPage,
+          page_w_cm: topoWcm,
+          page_h_cm: topoHcm,
           landscape: topoLandscape,
           title: topoTitle,
           offline: topoOffline
@@ -703,23 +708,30 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
                   </div>
                   <div className="flex justify-between text-slate-400 text-[11px]">
                     <span>{isAr ? 'الدقة الإجمالية:' : 'Megapixels:'}</span>
-                    <span className={stitchWidthPx * stitchHeightPx > MAX_STITCH_PX ? 'text-rose-400 font-bold' : ''}>{(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} MP</span>
+                    <span className={stitchWidthPx * stitchHeightPx > MAX_STREAM_PX ? 'text-rose-400 font-bold' : (stitchWidthPx * stitchHeightPx > MAX_INMEM_PX ? 'text-amber-300 font-bold' : '')}>{(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} MP</span>
                   </div>
                 </div>
-                {stitchWidthPx * stitchHeightPx > MAX_STITCH_PX && (
+                {stitchWidthPx * stitchHeightPx > MAX_STREAM_PX ? (
                   <div className="p-2.5 rounded bg-rose-950/40 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
                     <span>{isAr
-                      ? `الحجم ${(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} ميغابكسل يتجاوز الحد الآمن (${(MAX_STITCH_PX / 1e6).toFixed(0)} م.ب) وقد يُجمِّد الحاسوب. خفّض التكبير أو صغّر المنطقة.`
-                      : `${(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} MP exceeds the safe limit (${(MAX_STITCH_PX / 1e6).toFixed(0)} MP) and can freeze the machine. Lower the zoom or shrink the area.`}</span>
+                      ? `الحجم ${(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} ميغابكسل يتجاوز الحد الأقصى (${(MAX_STREAM_PX / 1e6).toFixed(0)} م.ب). خفّض التكبير أو صغّر المنطقة.`
+                      : `${(stitchWidthPx * stitchHeightPx / 1e6).toFixed(0)} MP exceeds the maximum (${(MAX_STREAM_PX / 1e6).toFixed(0)} MP). Lower the zoom or shrink the area.`}</span>
                   </div>
-                )}
+                ) : stitchWidthPx * stitchHeightPx > MAX_INMEM_PX ? (
+                  <div className="p-2.5 rounded bg-amber-950/40 border border-amber-800 text-amber-200 text-xs flex items-center gap-2">
+                    <HardDrive className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span>{isAr
+                      ? 'حجم كبير: سيُنتَج كملف GeoTIFF متدفّق إلى القرص بذاكرة محدودة (لا يُجمّد الحاسوب)، وقد يستغرق وقتاً. صيغة الإخراج تصبح GeoTIFF تلقائياً.'
+                      : 'Large output: produced as a streamed GeoTIFF with bounded memory (no freeze); it may take a while. Output format becomes GeoTIFF automatically.'}</span>
+                  </div>
+                ) : null}
               </div>
 
               {/* Stitch Action Button */}
               <button
                 onClick={handleStartStitch}
-                disabled={isStitching || stitchWidthPx * stitchHeightPx > MAX_STITCH_PX}
+                disabled={isStitching || stitchWidthPx * stitchHeightPx > MAX_STREAM_PX}
                 className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:bg-slate-800 disabled:text-slate-500"
               >
                 {isStitching ? (
@@ -826,9 +838,23 @@ print(f"- WorldFile: {stitch_res['world_file_path']}")
                     <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'حجم الورق (أبعاد الخريطة):' : 'Paper size:'}</label>
                     <select value={topoPage} onChange={(e) => setTopoPage(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200">
                       {['A4', 'A3', 'A2', 'A1', 'A0'].map((pg) => <option key={pg} value={pg}>{pg}</option>)}
+                      <option value="custom">{isAr ? 'مخصص (سم)…' : 'Custom (cm)…'}</option>
                     </select>
                   </div>
                 </div>
+
+                {topoPage === 'custom' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'العرض (سم):' : 'Width (cm):'}</label>
+                      <input type="number" min={5} max={400} step={1} value={topoWcm} onChange={(e) => setTopoWcm(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'الطول (سم):' : 'Height (cm):'}</label>
+                      <input type="number" min={5} max={400} step={1} value={topoHcm} onChange={(e) => setTopoHcm(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200" />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'عنوان الخريطة:' : 'Map title:'}</label>
